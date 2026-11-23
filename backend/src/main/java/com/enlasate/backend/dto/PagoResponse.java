@@ -4,10 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record PagoResponse(
-        Integer idPago,
-        String cliente,
-        String mesCorrespondiente,
-        BigDecimal monto,
-        LocalDate fechaPago,
-        String metodoPago
+    Integer idPago,
+    Integer idCliente,
+    String nombreCliente,
+    BigDecimal monto,
+    String mesCorrespondiente,
+    LocalDate fechaPago,
+    String metodoPago
 ) {}

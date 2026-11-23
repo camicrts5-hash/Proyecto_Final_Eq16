@@ -3,6 +3,9 @@ package com.enlasate.backend.dto;
 import jakarta.validation.constraints.*;
 
 public record RegistroRequest(
+         @NotBlank(message = "El nombre de usuario es obligatorio")
+        @Size(max = 40, message = "Máximo 40 caracteres")
+        String usuario,
 
         @NotBlank(message = "El nombre es obligatorio")
         @Size(max = 60, message = "Máximo 60 caracteres")
