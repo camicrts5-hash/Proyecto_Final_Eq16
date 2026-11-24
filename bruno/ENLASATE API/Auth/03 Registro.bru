@@ -1,0 +1,35 @@
+meta {
+  name: 03 Registro
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/registro
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "usuario": "nuevo.cliente2",
+    "nombre": "Pedro",
+    "apellido": "Sánchez",
+    "email": "pedro2.bruno@correo.com",
+    "telefono": "9511234567",
+    "password": "Enlasate2026!",
+    "idPlan": 1
+  }
+}
+
+tests {
+  test("responde 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 01 Listar Clientes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/clientes
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("responde 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}
