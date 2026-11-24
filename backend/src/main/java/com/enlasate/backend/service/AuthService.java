@@ -51,7 +51,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
-
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
 
         authenticationManager.authenticate(
