@@ -13,8 +13,10 @@ import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ClienteService {
@@ -49,6 +51,32 @@ public class ClienteService {
                                 "No se encontró el cliente con ID: " + id
                         )
                 );
+
+        return convertirRespuesta(cliente);
+    }
+
+    @Transactional
+    public ClienteResponse seleccionarPlan(String email, Integer idPlan) {
+
+        Cliente cliente = clienteRepository.findByUsuario_Email(email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No se encontró el cliente asociado a esta cuenta"
+                        )
+                );
+
+        Plan plan = planRepository.findById(idPlan)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "El plan seleccionado no existe"
+                        )
+                );
+
+        cliente.setPlan(plan);
+
+        clienteRepository.save(cliente);
 
         return convertirRespuesta(cliente);
     }
@@ -105,10 +133,23 @@ public class ClienteService {
                 usuario.getNombre(),
                 usuario.getEmail(),
                 usuario.getTelefono(),
-                plan.getNombrePlan(),
-                plan.getPrecioMensual(),
+                plan != null ? plan.getNombrePlan() : null,
+                plan != null ? plan.getPrecioMensual() : null,
                 cliente.getFechaAlta(),
                 cliente.getEstado()
         );
     }
+    @Transactional(readOnly = true)
+public ClienteResponse consultarMiPlan(String email) {
+
+    Cliente cliente = clienteRepository.findByUsuario_Email(email)
+            .orElseThrow(() ->
+                    new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "No se encontró el cliente asociado a esta cuenta"
+                    )
+            );
+
+    return convertirRespuesta(cliente);
+}
 }

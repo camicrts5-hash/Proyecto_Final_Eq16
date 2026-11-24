@@ -10,5 +10,7 @@ public record PagoResponse(
     BigDecimal monto,
     String mesCorrespondiente,
     LocalDate fechaPago,
-    String metodoPago
+    String metodoPago,
+    String nombrePlan,
+    String estadoPago
 ) {}

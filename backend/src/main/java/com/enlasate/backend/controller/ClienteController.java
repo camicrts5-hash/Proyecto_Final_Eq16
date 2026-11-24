@@ -2,6 +2,7 @@ package com.enlasate.backend.controller;
 
 import com.enlasate.backend.dto.ClienteRequest;
 import com.enlasate.backend.dto.ClienteResponse;
+import com.enlasate.backend.dto.PlanSeleccionRequest;
 import com.enlasate.backend.service.ClienteService;
 
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -44,6 +46,31 @@ public class ClienteController {
         );
     }
 
+    // Seleccionar plan del cliente autenticado
+    @PutMapping("/mi-plan")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<ClienteResponse> seleccionarPlan(
+            @Valid @RequestBody PlanSeleccionRequest request,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                clienteService.seleccionarPlan(
+                        authentication.getName(),
+                        request.idPlan()
+                )
+        );
+    }
+    // Consultar los datos del cliente autenticado
+@GetMapping("/mi-plan")
+@PreAuthorize("hasRole('CLIENTE')")
+public ResponseEntity<ClienteResponse> consultarMiPlan(
+        Authentication authentication) {
+
+    return ResponseEntity.ok(
+            clienteService.consultarMiPlan(authentication.getName())
+    );
+}
+
     // Actualizar cliente
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -55,4 +82,5 @@ public class ClienteController {
                 clienteService.actualizar(id, request)
         );
     }
+
 }

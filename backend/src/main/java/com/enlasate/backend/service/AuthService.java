@@ -7,11 +7,9 @@ import com.enlasate.backend.dto.LoginRequest;
 import com.enlasate.backend.dto.RegistroRequest;
 import com.enlasate.backend.entity.Usuario;
 import com.enlasate.backend.entity.Cliente;
-import com.enlasate.backend.entity.Plan;
 import com.enlasate.backend.entity.Rol;
 import com.enlasate.backend.repository.UsuarioRepository;
 import com.enlasate.backend.repository.ClienteRepository;
-import com.enlasate.backend.repository.PlanRepository;
 import com.enlasate.backend.repository.RolRepository;
 import com.enlasate.backend.security.JwtService;
 
@@ -29,7 +27,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
     private final ClienteRepository clienteRepository;
-    private final PlanRepository planRepository;
     private final RolRepository rolRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -38,7 +35,6 @@ public class AuthService {
             AuthenticationManager authenticationManager,
             UsuarioRepository usuarioRepository,
             ClienteRepository clienteRepository,
-            PlanRepository planRepository,
             RolRepository rolRepository,
             JwtService jwtService,
             PasswordEncoder passwordEncoder) {
@@ -46,11 +42,11 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
         this.clienteRepository = clienteRepository;
-        this.planRepository = planRepository;
         this.rolRepository = rolRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
+
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
 
@@ -89,14 +85,6 @@ public class AuthService {
             );
         }
 
-        Plan plan = planRepository.findById(request.idPlan())
-            .orElseThrow(() ->
-                new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "El plan seleccionado no existe"
-                )
-            );
-
         Rol rol = rolRepository.findByNombreRol("Cliente")
             .orElseThrow(() ->
                 new ResponseStatusException(
@@ -121,7 +109,7 @@ public class AuthService {
         Cliente cliente = new Cliente();
 
         cliente.setUsuario(usuario);
-        cliente.setPlan(plan);
+        cliente.setPlan(null);
         cliente.setFechaAlta(LocalDate.now());
         cliente.setEstado("Activo");
 

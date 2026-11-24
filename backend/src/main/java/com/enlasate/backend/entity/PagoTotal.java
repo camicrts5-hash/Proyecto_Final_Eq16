@@ -7,7 +7,10 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "pago_total")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PagoTotal {
 
     @Id
@@ -18,8 +21,17 @@ public class PagoTotal {
     @JoinColumn(name = "id_cliente")
     private Cliente cliente;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_plan")
+    private Plan plan;
+
     private BigDecimal monto;
+
     private String mesCorrespondiente;
+
     private LocalDate fechaPago;
+
     private String metodoPago;
+
+    private String estadoPago;
 }

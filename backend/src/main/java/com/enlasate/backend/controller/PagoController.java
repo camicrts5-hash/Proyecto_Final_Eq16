@@ -2,13 +2,17 @@ package com.enlasate.backend.controller;
 
 import com.enlasate.backend.dto.PagoRequest;
 import com.enlasate.backend.dto.PagoResponse;
+import com.enlasate.backend.dto.PagoSimuladoRequest;
 import com.enlasate.backend.service.PagoService;
+
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,45 +25,93 @@ public class PagoController {
         this.pagoService = pagoService;
     }
 
+    // Registrar pago simulado del cliente autenticado
+    @PostMapping("/mi-pago")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<PagoResponse> registrarMiPago(
+        Authentication authentication,
+        @Valid @RequestBody PagoSimuladoRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(
+                pagoService.registrarPagoSimulado(
+                    authentication.getName(),
+                    request
+                )
+            );
+    }
+
+    // Consultar historial del cliente autenticado
+    @GetMapping("/mi-historial")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Page<PagoResponse>> miHistorial(
+        Authentication authentication,
+        Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+            pagoService.listarPorEmail(
+                authentication.getName(),
+                pageable
+            )
+        );
+    }
+
+    // Listar todos los pagos
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<Page<PagoResponse>> listar(Pageable pageable) {
         return ResponseEntity.ok(pagoService.listar(pageable));
     }
 
+    // Historial de un cliente por ID
     @GetMapping("/cliente/{idCliente}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<Page<PagoResponse>> listarPorCliente(
-            @PathVariable Integer idCliente, Pageable pageable) {
+        @PathVariable Integer idCliente,
+        Pageable pageable
+    ) {
         return ResponseEntity.ok(
-            pagoService.listarPorCliente(idCliente, pageable));
+            pagoService.listarPorCliente(idCliente, pageable)
+        );
     }
 
+    // Buscar pago por ID
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
-    public ResponseEntity<PagoResponse> buscarPorId(@PathVariable Integer id) {
+    public ResponseEntity<PagoResponse> buscarPorId(
+        @PathVariable Integer id
+    ) {
         return ResponseEntity.ok(pagoService.buscarPorId(id));
     }
 
+    // Registrar pago manualmente
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PagoResponse> registrar(
-            @Valid @RequestBody PagoRequest request) {
+        @Valid @RequestBody PagoRequest request
+    ) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(pagoService.registrar(request));
     }
 
+    // Actualizar pago
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PagoResponse> actualizar(
-            @PathVariable Integer id,
-            @Valid @RequestBody PagoRequest request) {
-        return ResponseEntity.ok(pagoService.actualizar(id, request));
+        @PathVariable Integer id,
+        @Valid @RequestBody PagoRequest request
+    ) {
+        return ResponseEntity.ok(
+            pagoService.actualizar(id, request)
+        );
     }
 
+    // Eliminar pago
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminar(
+        @PathVariable Integer id
+    ) {
         pagoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
