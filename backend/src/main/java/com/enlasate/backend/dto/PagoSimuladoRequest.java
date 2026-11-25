@@ -13,9 +13,13 @@ public record PagoSimuladoRequest(
 
     @NotBlank(message = "Debes seleccionar un método de pago")
     @Pattern(
-        regexp = "tarjeta|transferencia|efectivo",
+        regexp = "^(?i)(tarjeta|transferencia|efectivo|deposito)$",
         message = "El método de pago no es válido"
     )
-    String metodoPago
+    String metodoPago,
+
+    // Mes que está pagando en formato YYYY-MM (si no viene, se usa el actual)
+    @Pattern(regexp = "^\\d{4}-\\d{2}$", message = "El mes debe tener formato YYYY-MM")
+    String mes
 
 ) {}

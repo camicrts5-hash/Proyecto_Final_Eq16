@@ -56,6 +56,43 @@ public class PagoController {
         );
     }
 
+    // Confirmar un pago pendiente (transferencia, efectivo o depósito)
+    @PostMapping("/{id}/confirmar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
+    public ResponseEntity<PagoResponse> confirmar(@PathVariable Integer id) {
+        return ResponseEntity.ok(pagoService.confirmarPago(id));
+    }
+
+    // -----------------------------------------------------------------
+    // Estado de cuenta por año (ADMIN y EMPLEADO)
+    // -----------------------------------------------------------------
+    @GetMapping("/estado-cuenta/{idCliente}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
+    public ResponseEntity<com.enlasate.backend.dto.EstadoCuentaResponse> estadoCuenta(
+        @PathVariable Integer idCliente,
+        @RequestParam(required = false) Integer anio
+    ) {
+        return ResponseEntity.ok(
+            pagoService.estadoCuenta(idCliente, anio)
+        );
+    }
+
+    // -----------------------------------------------------------------
+    // Estado de cuenta del cliente autenticado
+    // -----------------------------------------------------------------
+    @GetMapping("/mi-estado-cuenta")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<com.enlasate.backend.dto.EstadoCuentaResponse> miEstadoCuenta(
+        Authentication authentication,
+        @RequestParam(required = false) Integer anio
+    ) {
+        Integer idCliente = pagoService.idClientePorEmail(authentication.getName());
+
+        return ResponseEntity.ok(
+            pagoService.estadoCuenta(idCliente, anio)
+        );
+    }
+
     // Listar todos los pagos
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
@@ -84,9 +121,9 @@ public class PagoController {
         return ResponseEntity.ok(pagoService.buscarPorId(id));
     }
 
-    // Registrar pago manualmente
+    // Registrar pago manualmente (efectivo o depósito: empleado o admin)
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<PagoResponse> registrar(
         @Valid @RequestBody PagoRequest request
     ) {

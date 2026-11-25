@@ -50,6 +50,68 @@ public class JwtService {
         return extractedEmail.equals(email) && !isTokenExpired(token);
     }
 
+    // -----------------------------------------------------------------
+    // Token de activación: firmado, con vigencia de 24 horas
+    // -----------------------------------------------------------------
+    public String generarTokenActivacion(String email) {
+
+        return Jwts.builder()
+                .subject(email)
+                .claim("tipo", "activacion")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 24L * 60 * 60 * 1000))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    // -----------------------------------------------------------------
+    // Token de recuperación de contraseña (30 minutos)
+    // -----------------------------------------------------------------
+    public String generarTokenRecuperacion(String email) {
+
+        return Jwts.builder()
+                .subject(email)
+                .claim("tipo", "recuperacion")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 30L * 60 * 1000))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String emailDeTokenRecuperacion(String token) {
+
+        try {
+            Claims claims = extractAllClaims(token);
+
+            if (!"recuperacion".equals(claims.get("tipo"))) {
+                return null;
+            }
+
+            if (claims.getExpiration().before(new Date())) {
+                return null;
+            }
+
+            return claims.getSubject();
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public boolean esTokenActivacionValido(String token, String email) {
+
+        try {
+            Claims claims = extractAllClaims(token);
+
+            return email.equalsIgnoreCase(claims.getSubject())
+                    && "activacion".equals(claims.get("tipo"))
+                    && claims.getExpiration().after(new Date());
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }

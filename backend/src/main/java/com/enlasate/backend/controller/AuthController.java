@@ -46,4 +46,50 @@ public class AuthController {
                 Map.of("mensaje", "Sesión cerrada correctamente")
         );
     }
+
+    // -----------------------------------------------------------------
+    // Cambio de contraseña del usuario autenticado
+    // -----------------------------------------------------------------
+    @PutMapping("/password")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, String>> cambiarPassword(
+            @Valid @RequestBody com.enlasate.backend.dto.CambioPasswordRequest request,
+            org.springframework.security.core.Authentication authentication) {
+
+        authService.cambiarPassword(authentication.getName(), request);
+
+        return ResponseEntity.ok(
+                Map.of("mensaje", "Contraseña actualizada correctamente")
+        );
+    }
+
+    // -----------------------------------------------------------------
+    // Recuperación de contraseña (público)
+    // -----------------------------------------------------------------
+    @PostMapping("/recuperar")
+    public ResponseEntity<Map<String, String>> recuperar(
+            @Valid @RequestBody com.enlasate.backend.dto.RecuperacionRequest request) {
+
+        authService.solicitarRecuperacion(request.email());
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje",
+                "Si el correo existe, te enviamos un enlace para restablecer tu contraseña"
+        ));
+    }
+
+    // -----------------------------------------------------------------
+    // Restablecer con el token del correo (público)
+    // -----------------------------------------------------------------
+    @PostMapping("/restablecer")
+    public ResponseEntity<Map<String, String>> restablecer(
+            @Valid @RequestBody com.enlasate.backend.dto.RestablecerRequest request) {
+
+        authService.restablecerPassword(request.token(), request.passwordNueva());
+
+        return ResponseEntity.ok(Map.of(
+                "mensaje",
+                "Contraseña actualizada. Ya puedes iniciar sesión"
+        ));
+    }
 }

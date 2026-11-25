@@ -1,0 +1,287 @@
+/* Estilos nuevos del panel: alta de clientes, código de activación y cobro */
+
+.panel-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 9px;
+  background: #0f2a4a;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel-btn-primario:hover:not(:disabled) { background: #17395f; }
+.panel-btn-primario:disabled { opacity: .55; cursor: not-allowed; }
+
+.panel-btn-sec {
+  padding: 10px 16px;
+  border: 1px solid #dde3ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #2d3748;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- código generado ---------- */
+.panel-codigo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f2f7ff;
+  border: 1px solid #cfe0f7;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.panel-codigo-tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  font-weight: 700;
+  color: #2f6fb5;
+  margin-bottom: 4px;
+}
+
+.panel-codigo-valor {
+  display: block;
+  font-size: 12.5px;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-weight: 500;
+  color: #0f2a4a;
+  margin-bottom: 6px;
+  word-break: break-all;
+  line-height: 1.45;
+  background: #fff;
+  border: 1px solid #d6e4f7;
+  border-radius: 8px;
+  padding: 9px 11px;
+  max-height: 96px;
+  overflow: auto;
+}
+
+.panel-codigo small {
+  font-size: 12.5px;
+  color: #5b6b80;
+  line-height: 1.5;
+}
+
+.panel-codigo-cerrar {
+  background: none;
+  border: none;
+  color: #7a8ba3;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.panel-codigo-cerrar:hover { color: #b02a37; }
+
+/* ---------- formulario de alta ---------- */
+.panel-form {
+  background: #fbfcfe;
+  border: 1px solid #e6ebf3;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.panel-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-form label,
+.panel-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.panel-form input,
+.panel-form-label input,
+.panel-form-label select {
+  padding: 10px 12px;
+  border: 1px solid #dde3ec;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1f2937;
+  outline: none;
+  background: #fff;
+}
+
+.panel-form input:focus,
+.panel-form-label input:focus,
+.panel-form-label select:focus {
+  border-color: #0f2a4a;
+}
+
+.panel-form-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.panel-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 0 16px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e2e8f2;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.panel-check input {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  accent-color: #0f2a4a;
+  cursor: pointer;
+}
+
+.panel-check small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7688;
+  line-height: 1.45;
+}
+
+.panel-nota {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: #6b7688;
+  line-height: 1.5;
+}
+
+.panel-select {
+  padding: 9px 12px;
+  border: 1px solid #dde3ec;
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: #2d3748;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.panel-select:focus {
+  border-color: #0f2a4a;
+}
+
+.panel-cuenta-aviso {
+  margin-top: 16px;
+  padding: 14px;
+  background: #f2f7ff;
+  border: 1px solid #cfe0f7;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-cuenta-aviso strong {
+  font-size: 13.5px;
+  color: #1d5fa8;
+}
+
+.panel-cuenta-aviso small {
+  font-size: 12.5px;
+  color: #5b6b80;
+  line-height: 1.5;
+}
+
+.panel-cuenta-aviso button {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* ---------- acciones de la tabla ---------- */
+.panel-acciones-fila {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.panel-btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid #cfd8e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #0f2a4a;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.panel-btn-mini:hover { background: #f2f7ff; border-color: #9fbedd; }
+.panel-btn-mini.gris { color: #4a5568; }
+.panel-btn-mini.rojo { color: #b02a37; border-color: #f0c3c9; }
+.panel-btn-mini.rojo:hover { background: #fdecea; }
+
+.panel-code-chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #f2f7ff;
+  border: 1px solid #cfe0f7;
+  color: #1d5fa8;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+
+.panel-mudo { color: #c2cad6; }
+
+.panel-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1d5fa8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color .15s;
+}
+
+.panel-link:hover {
+  text-decoration-color: #1d5fa8;
+}
+
+@media (max-width: 720px) {
+  .panel-acciones { flex-direction: column; align-items: stretch; }
+  .panel-form-acciones { flex-direction: column-reverse; }
+}

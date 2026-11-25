@@ -1,0 +1,143 @@
+/* ---------- NAVBAR ---------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #0f2a4a;
+  color: #fff;
+  flex-wrap: wrap;
+}
+
+.navbar-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #2f80ed;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.navbar-titulo {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: .3px;
+}
+
+.navbar-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2f80ed;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.navbar-datos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.navbar-datos small {
+  opacity: .7;
+  font-size: 12px;
+}
+
+.navbar-salir {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, .4);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.navbar-salir:hover {
+  background: rgba(255, 255, 255, .12);
+}
+
+/* ---------- MODAL ---------- */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 35, .55);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-caja {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+}
+
+.modal-titulo {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #0f2a4a;
+}
+
+.modal-mensaje {
+  margin: 0 0 20px;
+  color: #545b6b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-btn.secundario {
+  background: #eef1f6;
+  color: #333;
+}
+
+.modal-btn.peligro {
+  background: #dc3545;
+  color: #fff;
+}
+
+.modal-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .navbar-datos { display: none; }
+  .navbar { padding: 10px 14px; }
+}
