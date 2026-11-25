@@ -23,3 +23,25 @@ button,
 input {
   font-family: inherit;
 }
+
+/* Enlace de recuperación bajo el botón de iniciar sesión */
+.auth-olvido {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.auth-olvido button {
+  background: none;
+  border: none;
+  color: #5b6b80;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color .15s, color .15s;
+}
+
+.auth-olvido button:hover {
+  color: #0f2a4a;
+  text-decoration-color: #0f2a4a;
+}

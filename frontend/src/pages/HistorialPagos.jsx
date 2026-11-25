@@ -11,8 +11,11 @@ import {
   LoaderCircle,
   History,
   User,
+  Gauge,
+  LogOut,
 } from "lucide-react";
 import api from "../services/api";
+import "./Dashboard.css";
 import "./HistorialPagos.css";
 
 function HistorialPagos() {
@@ -82,30 +85,69 @@ function HistorialPagos() {
     0
   );
 
+  const cerrarSesion = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (e) {
+      /* si falla, igual cerramos */
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    navigate("/login", { replace: true });
+  };
+
   return (
-    <main className="historial-page">
-      <header className="historial-header">
-        <div className="historial-brand">
-          <div className="historial-brand-icon">
-            <Wifi size={24} />
+    <main className="dashboard">      {/* ---------------- BARRA LATERAL ---------------- */}
+      <aside className="dashboard-sidebar">
+        <div className="dashboard-logo">
+          <div className="dashboard-logo-icon">
+            <Wifi size={25} />
           </div>
           <span>ENLÁSATE</span>
         </div>
 
-        <div className="historial-user">
-          <User size={19} />
-          <span>{usuario.nombre || "Cliente"}</span>
-        </div>
-      </header>
+        <div className="sidebar-section">
+          <span className="sidebar-label">MENÚ PRINCIPAL</span>
 
-      <section className="historial-container">
-        <button
-          className="historial-back"
-          onClick={() => navigate("/dashboard")}
-        >
-          <ArrowLeft size={18} />
-          Volver al inicio
-        </button>
+          <button className="sidebar-link" onClick={() => navigate("/dashboard")}>
+            <Gauge size={19} /> Inicio
+          </button>
+
+          <button className="sidebar-link active" onClick={() => navigate("/historial-pagos")}>
+            <Receipt size={19} /> Historial de pagos
+          </button>
+
+          <button className="sidebar-link" onClick={() => navigate("/mi-estado-cuenta")}>
+            <CalendarDays size={19} /> Mi estado de cuenta
+          </button>
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-user">
+            <div className="sidebar-avatar">
+              <User size={20} />
+            </div>
+            <div>
+              <strong>{usuario.nombre || "Cliente"}</strong>
+              <span>Cliente</span>
+            </div>
+          </div>
+
+          <button className="sidebar-logout" onClick={cerrarSesion}>
+            <LogOut size={18} /> Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      <section className="dashboard-main">
+        <section className="historial-container">
+          <button
+            className="historial-back"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft size={18} />
+            Volver al inicio
+          </button>
 
         <div className="historial-heading">
           <div className="historial-heading-icon">
@@ -250,14 +292,14 @@ function HistorialPagos() {
             </div>
           )}
         </section>
-      </section>
 
-      <footer className="historial-footer">
-        <span>© 2026 ENLÁSATE. Todos los derechos reservados.</span>
-        <span>Tu conexión, nuestra prioridad.</span>
-      </footer>
+        <footer className="historial-footer">
+          <span>© 2026 ENLÁSATE. Todos los derechos reservados.</span>
+          <span>Tu conexión, nuestra prioridad.</span>
+        </footer>
+      </section>
+      </section>
     </main>
   );
 }
-
 export default HistorialPagos;

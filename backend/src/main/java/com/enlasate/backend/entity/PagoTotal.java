@@ -34,4 +34,9 @@ public class PagoTotal {
     private String metodoPago;
 
     private String estadoPago;
+
+    // Empleado que registró el cobro (solo efectivo/depósito)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_empleado")
+    private Empleado empleado;
 }

@@ -157,7 +157,7 @@ if (rol === "ADMIN") {
         })
       );
 
-      navigate("/dashboard");
+      navigate("/pendiente");
     } catch (err) {
       setErrorRegistro(
         err.response?.data?.mensaje ||
@@ -189,7 +189,7 @@ if (rol === "ADMIN") {
               Ingresa tus datos para continuar conectado.
             </p>
 
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleLogin} noValidate>
               <label className="auth-label">Correo electrónico</label>
 
               <div className="auth-input">
@@ -226,9 +226,9 @@ if (rol === "ADMIN") {
               </div>
 
               <div className="auth-forgot">
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <button type="button" onClick={() => navigate("/recuperar")}>
                   ¿Olvidaste tu contraseña?
-                </a>
+                </button>
               </div>
 
               {errorLogin && (
@@ -259,7 +259,7 @@ if (rol === "ADMIN") {
               Regístrate y descubre todo lo que ENLÁSATE tiene para ti.
             </p>
 
-            <form onSubmit={handleRegistro}>
+            <form onSubmit={handleRegistro} noValidate>
               <label className="auth-label">Nombre de usuario</label>
 
               <div className="auth-input">

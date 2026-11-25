@@ -5,8 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
+    @EntityGraph(attributePaths = "rol")
     Optional<Usuario> findByEmail(String email);
     Optional<Usuario> findByUsuario(String usuario);
  boolean existsByEmail(String email);

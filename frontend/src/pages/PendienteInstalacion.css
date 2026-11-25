@@ -1,0 +1,327 @@
+/* Pantalla de cuenta pendiente — diseño sobrio, sin tarjetas "de IA" */
+
+.pend {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  padding: 56px 24px 80px;
+}
+
+.pend-caja {
+  width: 100%;
+  max-width: 560px;
+}
+
+.pend-marca {
+  margin: 0 0 34px;
+  font-size: 12px;
+  letter-spacing: .22em;
+  font-weight: 700;
+  color: #0f2a4a;
+}
+
+.pend-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 22px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #5b6b80;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.pend-volver:hover {
+  color: #0f2a4a;
+}
+
+.pend-caja h1 {
+  margin: 0 0 14px;
+  font-size: 30px;
+  line-height: 1.15;
+  color: #0f2a4a;
+  letter-spacing: -.01em;
+}
+
+.pend-texto {
+  margin: 0 0 6px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: #4b5563;
+}
+
+.pend-texto.chico {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 14px;
+}
+
+.pend-linea {
+  border: none;
+  border-top: 1px solid #e9ecf2;
+  margin: 30px 0 26px;
+}
+
+.pend-caja h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+  color: #0f2a4a;
+}
+
+.pend-vacio {
+  font-size: 14px;
+  color: #8b95a5;
+  margin: 0 0 14px;
+}
+
+/* ---------- lista de asesores ---------- */
+.pend-lista {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.pend-fila {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e5e9f0;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s, background .15s;
+}
+
+.pend-fila:hover {
+  border-color: #c9d3e0;
+  background: #fafbfd;
+}
+
+.pend-fila.activa {
+  border-color: #0f2a4a;
+  background: #f5f8fc;
+}
+
+.pend-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  background: #eef1f6;
+  color: #0f2a4a;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pend-fila.activa .pend-avatar {
+  background: #0f2a4a;
+  color: #fff;
+}
+
+.pend-datos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pend-datos strong {
+  font-size: 14.5px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.pend-datos small {
+  font-size: 12.5px;
+  color: #7a8597;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.pend-rol {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #2f6fb5;
+  background: #eaf2fd;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.pend-check {
+  font-size: 15px;
+  color: #1e7a45;
+  font-weight: 700;
+  width: 16px;
+}
+
+/* ---------- botones ---------- */
+.pend-boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: #0f2a4a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.pend-boton:hover:not(:disabled) {
+  background: #17395f;
+}
+
+.pend-boton:disabled {
+  background: #c7cfda;
+  cursor: not-allowed;
+}
+
+.pend-boton.plano {
+  margin-top: 9px;
+  background: #fff;
+  color: #0f2a4a;
+  border: 1px solid #d7dde6;
+}
+
+.pend-boton.plano:hover {
+  background: #f6f8fb;
+}
+
+/* ---------- planes ---------- */
+.pend-planes {
+  margin-top: 16px;
+  border-top: 1px solid #eef1f6;
+  padding-top: 14px;
+}
+
+.pend-plan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f4f9;
+}
+
+.pend-plan strong {
+  display: block;
+  font-size: 14.5px;
+  color: #1f2937;
+}
+
+.pend-plan small {
+  font-size: 12.5px;
+  color: #7a8597;
+}
+
+.pend-plan-precio {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f2a4a;
+  white-space: nowrap;
+}
+
+.pend-plan-precio small {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8b95a5;
+}
+
+.pend-nota {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: #8b95a5;
+  line-height: 1.5;
+}
+
+/* ---------- código ---------- */
+.pend-codigo {
+  display: flex;
+  gap: 8px;
+}
+
+.pend-codigo input,
+.pend-codigo textarea {
+  flex: 1;
+  padding: 13px 15px;
+  border: 1px solid #dde3ec;
+  border-radius: 10px;
+  font-size: 15px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.pend-codigo input:focus,
+.pend-codigo textarea:focus {
+  border-color: #0f2a4a;
+}
+
+.pend-codigo button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 20px;
+  border: 1px solid #0f2a4a;
+  background: #fff;
+  color: #0f2a4a;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pend-codigo button:hover:not(:disabled) {
+  background: #f5f8fc;
+}
+
+.pend-codigo button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.pend-error {
+  margin: 12px 0 0;
+  color: #b02a37;
+  font-size: 13.5px;
+}
+
+.pend-salir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 36px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #8b95a5;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pend-salir:hover {
+  color: #b02a37;
+}
+
+@media (max-width: 560px) {
+  .pend { padding: 36px 18px 60px; }
+  .pend-caja h1 { font-size: 24px; }
+  .pend-codigo { flex-direction: column; }
+  .pend-codigo button { justify-content: center; padding: 13px; }
+}

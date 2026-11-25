@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import AdminPanel from "./pages/AdminPanel";
+import PendienteInstalacion from "./pages/PendienteInstalacion";
+import FichaCliente from "./pages/FichaCliente";
+import RecuperarPassword from "./pages/RecuperarPassword";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MetodoPago from "./pages/MetodoPago";
@@ -43,6 +46,20 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Login />} />
 
+        {/* RECUPERACIÓN DE CONTRASEÑA */}
+        <Route path="/recuperar" element={<RecuperarPassword />} />
+        <Route path="/restablecer" element={<RecuperarPassword />} />
+
+        {/* CUENTA CREADA PERO SIN INSTALAR */}
+        <Route
+          path="/pendiente"
+          element={
+            <RutaProtegida>
+              <PendienteInstalacion />
+            </RutaProtegida>
+          }
+        />
+
         {/* PANEL DE CLIENTE */}
         <Route
           path="/dashboard"
@@ -76,19 +93,44 @@ function App() {
           path="/admin"
           element={
             <RutaProtegida rolPermitido="ADMIN">
-              <h1>Panel de administrador</h1>
-              <p>Bienvenido al sistema ENLÁSATE.</p>
+              <AdminPanel />
             </RutaProtegida>
           }
         />
 
-        {/* PANEL DE EMPLEADO */}
+        <Route
+          path="/admin/cliente/:id"
+          element={
+            <RutaProtegida rolPermitido="ADMIN">
+              <FichaCliente />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/empleado/cliente/:id"
+          element={
+            <RutaProtegida rolPermitido="EMPLEADO">
+              <FichaCliente />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/mi-estado-cuenta"
+          element={
+            <RutaProtegida rolPermitido="CLIENTE">
+              <FichaCliente mi />
+            </RutaProtegida>
+          }
+        />
+
+        {/* PANEL DE EMPLEADO (mismo panel, el menú se filtra por rol) */}
         <Route
           path="/empleado"
           element={
             <RutaProtegida rolPermitido="EMPLEADO">
-              <h1>Panel de empleado</h1>
-              <p>Bienvenido al sistema ENLÁSATE.</p>
+              <AdminPanel />
             </RutaProtegida>
           }
         />

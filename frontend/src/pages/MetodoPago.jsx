@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Wifi,
@@ -23,6 +23,18 @@ function MetodoPago() {
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState("");
   const [exitoso, setExitoso] = useState(false);
+
+  // Si la cuenta todavía no está activa, no se le cobra: se le manda
+  // a elegir asesor y capturar el código
+  useEffect(() => {
+    api.get("/clientes/mi-plan")
+      .then(({ data }) => {
+        if (data.estado === "Pendiente") {
+          navigate("/pendiente", { replace: true });
+        }
+      })
+      .catch(() => {});
+  }, [navigate]);
 
   if (!plan) {
     return (

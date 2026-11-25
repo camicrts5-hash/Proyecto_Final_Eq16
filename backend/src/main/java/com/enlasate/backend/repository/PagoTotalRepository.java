@@ -8,12 +8,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface PagoTotalRepository extends JpaRepository<PagoTotal, Integer> {
 
     Page<PagoTotal> findByCliente_IdCliente(
         Integer idCliente,
         Pageable pageable
+    );
+
+    List<PagoTotal> findByCliente_IdClienteOrderByMesCorrespondienteAsc(
+        Integer idCliente
     );
 
     Page<PagoTotal> findByCliente_Usuario_Email(

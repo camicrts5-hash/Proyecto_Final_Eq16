@@ -10,8 +10,11 @@ import { Receipt,
   LoaderCircle,
   Radio,
   ShieldCheck,
+  KeyRound,
+  CalendarDays,
 } from "lucide-react";
 import api from "../services/api";
+import CambiarPassword from "../components/CambiarPassword";
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -23,6 +26,8 @@ function Dashboard() {
   const [planSeleccionado, setPlanSeleccionado] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [cambiarPass, setCambiarPass] = useState(false);
+  const [cliente, setCliente] = useState(null);
 
   useEffect(() => {
     if (!localStorage.getItem("token")) {
@@ -47,6 +52,8 @@ function Dashboard() {
       // Obtener los datos del cliente autenticado
       const respuestaCliente = await api.get("/clientes/mi-plan");
 
+      setCliente(respuestaCliente.data);
+
       // Recuperar el plan que tiene asignado
       if (respuestaCliente.data.plan) {
         const planActual = planesDisponibles.find(
@@ -70,10 +77,14 @@ function Dashboard() {
   };
 
   // Enviar al usuario a la pantalla de pago con el plan elegido
-  const seleccionarPlan = (plan) => {
-    navigate("/metodo-pago", {
-      state: { plan },
-    });
+  const seleccionarPlan = async (plan) => {
+    // ¿Todavía necesita activarse o elegir asesor?
+    const faltaActivar =
+      !cliente || cliente.estado === "Pendiente" || !cliente.empleado;
+
+    // El cliente NO puede cambiarse el plan: solo contacta a su asesor.
+    // El cambio lo hace el empleado o el administrador.
+    navigate(faltaActivar ? "/pendiente" : "/pendiente?cambio=1");
   };
 
   const cerrarSesion = async () => {
@@ -118,6 +129,14 @@ function Dashboard() {
   <Receipt size={19} />
   Historial de pagos
 </button>
+
+          <button
+            className="sidebar-link"
+            onClick={() => navigate("/mi-estado-cuenta")}
+          >
+            <CalendarDays size={19} />
+            Mi estado de cuenta
+          </button>
         </div>
 
         <div className="sidebar-bottom">
@@ -136,6 +155,20 @@ function Dashboard() {
             <LogOut size={18} />
             Cerrar sesión
           </button>
+
+          <button
+            className="sidebar-logout"
+            onClick={() => setCambiarPass(true)}
+            style={{ marginTop: "6px" }}
+          >
+            <KeyRound size={18} />
+            Cambiar contraseña
+          </button>
+
+          <CambiarPassword
+            abierto={cambiarPass}
+            onCerrar={() => setCambiarPass(false)}
+          />
         </div>
       </aside>
 
