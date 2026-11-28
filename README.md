@@ -172,7 +172,7 @@ De esta manera, Hibernate valida la estructura de las entidades sin crear o modi
 
 El siguiente diagrama representa las principales relaciones conceptuales de la base de datos.
 
-![alt text](img/image-5.png)
+![alt text](img/ROLE%20(6).png)
 
 
 ### 8.1 Clonar el repositorio
