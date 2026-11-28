@@ -13,7 +13,7 @@ La plataforma cuenta con diferentes tipos de usuarios, cada uno con funcionalida
 - **Empleado:** puede gestionar las solicitudes de soporte y realizar actividades relacionadas con la atención a los clientes.
 ![emple](img/emple.png)
 - **Administrador:** tiene acceso a las funciones administrativas del sistema, incluyendo la gestión de usuarios, planes y operaciones generales.
-![admin](img/admin.png.png)
+![admin](img/admin.png)
 
 El sistema utiliza autenticación mediante JSON Web Tokens (JWT) para proteger los recursos y controlar el acceso según el rol del usuario.
 
@@ -63,7 +63,7 @@ El proyecto utiliza una arquitectura cliente-servidor dividida en tres component
 
 La comunicación entre el frontend y el backend se realiza mediante peticiones HTTP utilizando una API REST.
 
-![regis](img/regis.png.png)
+![regis](img/regis.png)
 ## 5. Funcionalidades principales
 
 ### Módulo de clientes
