@@ -26,5 +26,7 @@ public record DomicilioRequest(
 
         @NotBlank(message = "El código postal es obligatorio")
         @Pattern(regexp = "\\d{5}", message = "El código postal debe tener exactamente 5 dígitos")
-        String codigoPostal
+        String codigoPostal,
+
+        Integer idColonia
 ) {}

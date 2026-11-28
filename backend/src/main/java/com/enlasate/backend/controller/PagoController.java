@@ -81,7 +81,7 @@ public class PagoController {
     // Estado de cuenta del cliente autenticado
     // -----------------------------------------------------------------
     @GetMapping("/mi-estado-cuenta")
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<com.enlasate.backend.dto.EstadoCuentaResponse> miEstadoCuenta(
         Authentication authentication,
         @RequestParam(required = false) Integer anio

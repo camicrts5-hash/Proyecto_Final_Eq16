@@ -1,0 +1,65 @@
+.falla-form {
+  background: #fff;
+  border: 1px solid #e9ecf2;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 26px;
+}
+
+.falla-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.falla-form textarea {
+  padding: 12px 14px;
+  border: 1px solid #dde3ec;
+  border-radius: 9px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1f2937;
+  outline: none;
+  resize: vertical;
+}
+
+.falla-form textarea:focus {
+  border-color: #0f2a4a;
+}
+
+.falla-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.falla-contador {
+  font-size: 12px;
+  color: #9aa4b2;
+}
+
+.falla-ok {
+  margin-top: 12px;
+  padding: 11px 14px;
+  background: #e9f7ee;
+  border-left: 4px solid #1e7a45;
+  border-radius: 8px;
+  color: #1e7a45;
+  font-size: 13px;
+}
+
+.falla-subtitulo {
+  margin: 0 0 14px;
+  font-size: 18px;
+  color: #0f2a4a;
+}
+
+.chip.abierto  { background: #fdecea; color: #b02a37; }
+.chip.proceso  { background: #fff7e6; color: #8a5e08; }
+.chip.cerrado  { background: #e9f7ee; color: #1e7a45; }

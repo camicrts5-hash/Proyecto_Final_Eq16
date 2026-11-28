@@ -482,9 +482,13 @@ public class PagoService {
     private PagoResponse convertirRespuesta(PagoTotal pago) {
         Cliente cliente = pago.getCliente();
 
-        String nombre = cliente.getUsuario().getNombre();
+        String nombre = cliente.getUsuario() != null
+                ? cliente.getUsuario().getNombre()
+                : cliente.getNombreContacto();
 
-        String apellido = cliente.getUsuario().getApellido();
+        String apellido = cliente.getUsuario() != null
+                ? cliente.getUsuario().getApellido()
+                : null;
 
         String nombreCompleto = nombre
             + (apellido == null || apellido.isBlank()

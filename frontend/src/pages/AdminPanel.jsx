@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Wifi, Gauge, Users, Radio, Receipt, LifeBuoy, UserCog,
   LogOut, User, LoaderCircle, Search, Trash2, Network,
-  UserPlus, KeyRound, CheckCircle2, Wallet, X, Pencil, Plus,
+  UserPlus, KeyRound, CheckCircle2, Wallet, X, Pencil, Plus, MapPin, RefreshCw,
 } from "lucide-react";
 import api from "../services/api";
 import ModalConfirmacion from "../components/ModalConfirmacion";
@@ -39,7 +39,12 @@ function AdminPanel() {
 
   // ---------- alta manual ----------
   const [nuevo, setNuevo] = useState(false);
-  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", telefono: "", conCuenta: true, idPlan: "" });
+  const [form, setForm] = useState({
+    nombre: "", apellido: "", email: "", telefono: "",
+    conCuenta: true, idPlan: "",
+    idEstado: "", idMunicipio: "", idColonia: "",
+    calle: "", numero: "", colonia: "", codigoPostal: "",
+  });
   const [creando, setCreando] = useState(false);
   const [creado, setCreado] = useState(null);
 
@@ -65,6 +70,46 @@ function AdminPanel() {
   const [borrandoEmp, setBorrandoEmp] = useState(false);
   const [cambiarPass, setCambiarPass] = useState(false);
 
+  // ---------- mi perfil (solo admin) ----------
+  const [editPerfil, setEditPerfil] = useState(false);
+  const [formPerfil, setFormPerfil] = useState({ nombre: "", apellido: "", email: "" });
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false);
+
+  const abrirPerfil = () => {
+    setFormPerfil({
+      nombre: usuario.nombre || "",
+      apellido: "",
+      email: usuario.email || "",
+    });
+    setEditPerfil(true);
+  };
+
+  const guardarPerfil = async (event) => {
+    event.preventDefault();
+    setGuardandoPerfil(true);
+    setError("");
+    try {
+      const { data } = await api.put("/auth/perfil", formPerfil);
+
+      // Se guarda el token y los datos nuevos (el correo cambió)
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("usuario", JSON.stringify({
+        idUsuario: data.idUsuario,
+        nombre: data.nombre,
+        email: data.email,
+        rol: data.rol,
+      }));
+
+      setEditPerfil(false);
+      window.location.reload();
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo guardar el perfil.");
+    } finally {
+      setGuardandoPerfil(false);
+    }
+  };
+
   // ---------- reporte PDF ----------
   const [anioRep, setAnioRep] = useState(String(new Date().getFullYear()));
   const [mesRep, setMesRep] = useState("");
@@ -79,6 +124,294 @@ function AdminPanel() {
   const [formEditE, setFormEditE] = useState({});
   const [guardandoEditE, setGuardandoEditE] = useState(false);
   const [creandoCuenta, setCreandoCuenta] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
+  // ---------- clientes por zona ----------
+  const [verZonas, setVerZonas] = useState(false);
+  const [zonas, setZonas] = useState([]);
+
+  // ---------- municipios y filtros ----------
+  const [municipios, setMunicipios] = useState([]);
+  const [estados, setEstados] = useState([]);
+  const [nuevoMunicipio, setNuevoMunicipio] = useState("");
+  const [agregandoMunicipio, setAgregandoMunicipio] = useState(false);
+  const [editandoMunicipio, setEditandoMunicipio] = useState(null);
+
+  // ---------- catálogo de colonias y estados ----------
+  const [colonias, setColonias] = useState([]);
+  const [editorZona, setEditorZona] = useState(null); // { tipo, id, valor }
+  const [zonaEstado, setZonaEstado] = useState("");
+  const [zonaMunicipio, setZonaMunicipio] = useState("");
+  const [zonaColonia, setZonaColonia] = useState("");
+
+  const cargarColonias = (idMunicipio) => {
+    if (!idMunicipio) {
+      setColonias([]);
+      return;
+    }
+
+    api.get("/colonias", { params: { idMunicipio: Number(idMunicipio) } })
+      .then(({ data }) => setColonias(data))
+      .catch(() => setColonias([]));
+  };
+
+  const abrirEditorZona = (tipo, id, valor) => {
+    setEditorZona({ tipo, id, valor });
+  };
+
+  const guardarZona = async () => {
+    if (!editorZona) return;
+
+    const valor = (editorZona.valor || "").trim();
+
+    if (valor.length < 3) {
+      setError("El nombre debe tener al menos 3 letras.");
+      return;
+    }
+
+    try {
+      if (editorZona.tipo === "estado") {
+        const { data } = editorZona.id
+          ? await api.put(`/estados/${editorZona.id}`, { nombreEstado: valor })
+          : await api.post("/estados", { nombreEstado: valor });
+
+        setEstados((lista) => {
+          const otras = lista.filter((e) => e.idEstado !== data.idEstado);
+          return [...otras, data].sort((a, b) => a.nombreEstado.localeCompare(b.nombreEstado));
+        });
+
+        setZonaEstado(String(data.idEstado));
+        setForm((f) => ({ ...f, idEstado: String(data.idEstado) }));
+      }
+
+      if (editorZona.tipo === "municipio") {
+        const { data } = editorZona.id
+          ? await api.put(`/municipios/${editorZona.id}`, {
+              nombreMunicipio: valor,
+              idEstado: Number(zonaEstado || 1),
+            })
+          : await api.post("/municipios", {
+              nombreMunicipio: valor,
+              idEstado: Number(zonaEstado || 1),
+            });
+
+        setMunicipios((lista) => {
+          const otros = lista.filter((m) => m.idMunicipio !== data.idMunicipio);
+          return [...otros, data].sort((a, b) => a.nombreMunicipio.localeCompare(b.nombreMunicipio));
+        });
+
+        setZonaMunicipio(String(data.idMunicipio));
+        cargarColonias(data.idMunicipio);
+      }
+
+      if (editorZona.tipo === "colonia") {
+        const idMunicipio = Number(zonaMunicipio || form.idMunicipio);
+
+        const { data } = editorZona.id
+          ? await api.put(`/colonias/${editorZona.id}`, {
+              nombreColonia: valor,
+              idMunicipio,
+            })
+          : await api.post("/colonias", {
+              nombreColonia: valor,
+              idMunicipio,
+            });
+
+        setColonias((lista) => {
+          const otras = lista.filter((c) => c.idColonia !== data.idColonia);
+          return [...otras, data].sort((a, b) => a.nombreColonia.localeCompare(b.nombreColonia));
+        });
+
+        setZonaColonia(String(data.idColonia));
+        setForm((f) => ({ ...f, idColonia: String(data.idColonia), colonia: data.nombreColonia }));
+      }
+
+      setEditorZona(null);
+      setError("");
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo guardar.");
+    }
+  };
+  const [filtros, setFiltros] = useState({
+    estado: "", conCuenta: "", pagoMes: "", idEstado: "", idMunicipio: "", colonia: "",
+  });
+
+  const cargarMunicipios = () => {
+    if (municipios.length === 0) {
+      api.get("/municipios").then(({ data }) => setMunicipios(data)).catch(() => {});
+    }
+  };
+
+  const cargarEstados = () => {
+    if (estados.length === 0) {
+      api.get("/estados").then(({ data }) => setEstados(data)).catch(() => setEstados([]));
+    }
+  };
+
+  const agregarMunicipio = async () => {
+    const nombre = nuevoMunicipio.trim();
+
+    if (nombre.length < 3) {
+      setError("Escribe el nombre del municipio (mínimo 3 letras).");
+      return;
+    }
+
+    try {
+      const { data } = await api.post("/municipios", {
+        nombreMunicipio: nombre,
+        idEstado: 1,
+      });
+
+      setMunicipios((lista) => [...lista, data]);
+      setForm((f) => ({ ...f, idMunicipio: String(data.idMunicipio) }));
+      setNuevoMunicipio("");
+      setAgregandoMunicipio(false);
+      setError("");
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo agregar el municipio.");
+    }
+  };
+
+  // ---------- editar domicilio del cliente ----------
+  const [domCliente, setDomCliente] = useState(null);
+  const [formDom, setFormDom] = useState({
+    idDomicilio: null, idMunicipio: "", idColonia: "",
+    calle: "", numero: "", colonia: "", codigoPostal: "",
+  });
+  const [guardandoDom, setGuardandoDom] = useState(false);
+
+  const abrirDomicilio = async (cliente) => {
+    cargarMunicipios();
+    setDomCliente(cliente);
+    setError("");
+
+    try {
+      const { data } = await api.get(`/domicilios/cliente/${cliente.idCliente}`);
+      const d = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+      if (d) {
+        setFormDom({
+          idDomicilio: d.idDomicilio,
+          idMunicipio: String(d.idMunicipio || ""),
+          idColonia: d.idColonia ? String(d.idColonia) : "",
+          calle: d.calle || "",
+          numero: d.numero || "",
+          colonia: d.colonia || "",
+          codigoPostal: d.codigoPostal || "",
+        });
+
+        if (d.idMunicipio) {
+          api.get("/colonias", { params: { idMunicipio: d.idMunicipio } })
+            .then(({ data: cols }) => setColonias(Array.isArray(cols) ? cols : []))
+            .catch(() => setColonias([]));
+        }
+      } else {
+        setFormDom({
+          idDomicilio: null, idMunicipio: "", idColonia: "",
+          calle: "", numero: "", colonia: "", codigoPostal: "",
+        });
+        setColonias([]);
+      }
+    } catch (e) {
+      setFormDom({
+        idDomicilio: null, idMunicipio: "", idColonia: "",
+        calle: "", numero: "", colonia: "", codigoPostal: "",
+      });
+    }
+  };
+
+  const guardarDomicilio = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    if (!formDom.idMunicipio || !formDom.colonia.trim() || !formDom.calle.trim()
+        || !formDom.numero.trim() || !/^\d{5}$/.test(formDom.codigoPostal.trim())) {
+      setError("Completa municipio, colonia, calle, número y código postal de 5 dígitos.");
+      return;
+    }
+
+    setGuardandoDom(true);
+
+    const cuerpo = {
+      idCliente: domCliente.idCliente,
+      idMunicipio: Number(formDom.idMunicipio),
+      idColonia: formDom.idColonia ? Number(formDom.idColonia) : null,
+      calle: formDom.calle.trim(),
+      numero: formDom.numero.trim(),
+      colonia: formDom.colonia.trim(),
+      codigoPostal: formDom.codigoPostal.trim(),
+    };
+
+    try {
+      if (formDom.idDomicilio) {
+        await api.put(`/domicilios/${formDom.idDomicilio}`, cuerpo);
+      } else {
+        await api.post("/domicilios", cuerpo);
+      }
+
+      setDomCliente(null);
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo guardar el domicilio.");
+    } finally {
+      setGuardandoDom(false);
+    }
+  };
+  const abrirEditarMunicipio = () => {
+    const actual = municipios.find((m) => String(m.idMunicipio) === String(form.idMunicipio));
+
+    if (!actual) {
+      setError("Primero selecciona un municipio para editarlo.");
+      return;
+    }
+
+    setEditandoMunicipio(actual.idMunicipio);
+    setNuevoMunicipio(actual.nombreMunicipio);
+    setAgregandoMunicipio(false);
+  };
+
+  const guardarMunicipioEditado = async () => {
+    const nombre = nuevoMunicipio.trim();
+
+    if (nombre.length < 3) {
+      setError("El nombre del municipio debe tener al menos 3 letras.");
+      return;
+    }
+
+    try {
+      const { data } = await api.put(`/municipios/${editandoMunicipio}`, {
+        nombreMunicipio: nombre,
+        idEstado: 1,
+      });
+
+      setMunicipios((lista) =>
+        lista.map((m) => (m.idMunicipio === data.idMunicipio ? data : m))
+      );
+      setEditandoMunicipio(null);
+      setNuevoMunicipio("");
+      setError("");
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo editar el municipio.");
+    }
+  };
+
+  const abrirZonas = () => {
+    setVerZonas((v) => !v);
+    if (zonas.length === 0) {
+      api.get("/clientes/por-zona")
+        .then(({ data }) => setZonas(data))
+        .catch(() => setZonas([]));
+    }
+  };
+
+  const copiarCodigo = (texto) => {
+    navigator.clipboard?.writeText(texto || "");
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
 
   // ---------- restablecer contraseña de cliente ----------
   const [resetCliente, setResetCliente] = useState(null);
@@ -97,6 +430,58 @@ function AdminPanel() {
   const [paginaTickets, setPaginaTickets] = useState(0);
   const [totalPaginasTickets, setTotalPaginasTickets] = useState(0);
   const [cargandoTickets, setCargandoTickets] = useState(false);
+
+  // ---------- alta de ticket ----------
+  const [nuevoTicket, setNuevoTicket] = useState(false);
+  const [formTicket, setFormTicket] = useState({ idCliente: "", idEmpleado: "", descripcion: "" });
+  const [guardandoTicket, setGuardandoTicket] = useState(false);
+  const [clientesLista, setClientesLista] = useState([]);
+
+  const abrirNuevoTicket = () => {
+    setNuevoTicket((v) => !v);
+    if (clientesLista.length === 0) {
+      api.get("/clientes", { params: { page: 0, size: 100 } })
+        .then(({ data }) => setClientesLista(data.content || []))
+        .catch(() => {});
+    }
+    if (empleados.length === 0) cargarEmpleados();
+  };
+
+  const crearTicket = async (event) => {
+    event.preventDefault();
+    setGuardandoTicket(true);
+    setError("");
+    try {
+      await api.post("/soporte", {
+        idCliente: Number(formTicket.idCliente),
+        idEmpleado: Number(formTicket.idEmpleado),
+        descripcionFalla: formTicket.descripcion,
+        fechaReporte: new Date().toISOString().slice(0, 19),
+        estadoTicket: "Abierto",
+        fechaCierre: null,
+      });
+      setFormTicket({ idCliente: "", idEmpleado: "", descripcion: "" });
+      setNuevoTicket(false);
+      cargarTickets();
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo crear el ticket.");
+    } finally {
+      setGuardandoTicket(false);
+    }
+  };
+
+  const borrarTicket = async (t) => {
+    if (!window.confirm(`¿Eliminar el ticket #${t.idTicket}?`)) return;
+    setError("");
+    try {
+      await api.delete(`/soporte/${t.idTicket}`);
+      cargarTickets();
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo eliminar el ticket.");
+    }
+  };
 
   const cargarTickets = useCallback(() => {
     setCargandoTickets(true);
@@ -210,21 +595,45 @@ function AdminPanel() {
     setError("");
     try {
       const { data } = await api.get("/clientes", {
-        params: { page: pagina, size: TAM, q: busqueda || undefined },
+        params: {
+          page: pagina,
+          size: TAM,
+          q: busqueda || undefined,
+          estado: filtros.estado || undefined,
+          conCuenta: filtros.conCuenta === "" ? undefined : filtros.conCuenta === "si",
+          pagoMes: filtros.pagoMes === "" ? undefined : filtros.pagoMes === "si",
+          idEstado: filtros.idEstado ? Number(filtros.idEstado) : undefined,
+          idMunicipio: filtros.idMunicipio ? Number(filtros.idMunicipio) : undefined,
+          colonia: filtros.colonia || undefined,
+        },
       });
       setClientes(data.content || []);
       setTotalPaginas(data.totalPages || 0);
       setTotal(data.totalElements || 0);
     } catch (e) {
-      setError("No se pudo cargar la lista de clientes.");
+      const status = e?.response?.status;
+      setError(
+        status
+          ? `No se pudo cargar la lista de clientes (error ${status}).`
+          : "No se pudo cargar la lista de clientes. Revisa tu conexión."
+      );
       setClientes([]);
     } finally {
       setCargando(false);
     }
-  }, [pagina, busqueda]);
+  }, [pagina, busqueda, filtros]);
 
   useEffect(() => {
-    if (seccion === "clientes") cargarClientes();
+    if (seccion === "clientes") {
+      cargarClientes();
+      cargarEstados();
+      cargarMunicipios();
+    }
+
+    if (seccion === "zonas") {
+      cargarEstados();
+      cargarMunicipios();
+    }
   }, [seccion, cargarClientes]);
 
   useEffect(() => {
@@ -448,14 +857,56 @@ function AdminPanel() {
   const crearCliente = async (event) => {
     event.preventDefault();
     setError("");
+
+    // Validación propia (mensajes en rojo, sin globos del navegador)
+    if (!form.nombre.trim()) {
+      setError("Escribe el nombre del cliente.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setError("El correo no tiene un formato válido. Ejemplo: cliente@correo.com");
+      return;
+    }
+    if (!/^\d{10}$/.test(form.telefono.trim())) {
+      setError("El teléfono debe tener exactamente 10 dígitos.");
+      return;
+    }
+    if (!form.idMunicipio) {
+      setError("Selecciona el municipio del cliente (o agrégalo con el botón +).");
+      return;
+    }
+    if (!form.colonia.trim()) {
+      setError("Selecciona la colonia (o agrégala con el botón +).");
+      return;
+    }
+    if (!form.calle.trim()) {
+      setError("Escribe la calle.");
+      return;
+    }
+    if (!form.numero.trim()) {
+      setError("Escribe el número exterior.");
+      return;
+    }
+    if (!/^\d{5}$/.test(form.codigoPostal.trim())) {
+      setError("El código postal debe tener exactamente 5 dígitos.");
+      return;
+    }
+
     setCreando(true);
     try {
       const { data } = await api.post("/clientes", {
         ...form,
         idPlan: form.idPlan ? Number(form.idPlan) : null,
+        idMunicipio: Number(form.idMunicipio),
+        idColonia: form.idColonia ? Number(form.idColonia) : null,
       });
       setCreado(data);
-      setForm({ nombre: "", apellido: "", email: "", telefono: "", conCuenta: true, idPlan: "" });
+      setForm({
+        nombre: "", apellido: "", email: "", telefono: "",
+        conCuenta: true, idPlan: "",
+        idEstado: "", idMunicipio: "", idColonia: "",
+        calle: "", numero: "", colonia: "", codigoPostal: "",
+      });
       setNuevo(false);
       cargarClientes();
     } catch (e) {
@@ -558,6 +1009,7 @@ function AdminPanel() {
     { id: "planes",   label: "Planes y Equipos",    Icono: Radio,     admin: false },
     { id: "pagos",    label: "Pagos y Facturación", Icono: Receipt,   admin: false },
     { id: "soporte",  label: "Soporte Técnico",     Icono: LifeBuoy,  admin: false },
+    { id: "zonas",    label: "Zonas y Colonias",    Icono: Network,   admin: true  },
     { id: "usuarios", label: "Gestión de Usuarios", Icono: UserCog,   admin: true  },
   ].filter((m) => esAdmin || !m.admin);
 
@@ -613,6 +1065,17 @@ function AdminPanel() {
             <KeyRound size={18} />
             Cambiar contraseña
           </button>
+
+          {esAdmin && (
+            <button
+              className="sidebar-logout"
+              onClick={abrirPerfil}
+              style={{ marginTop: "6px" }}
+            >
+              <UserCog size={18} />
+              Mi perfil
+            </button>
+          )}
         </div>
       </aside>
 
@@ -629,6 +1092,7 @@ function AdminPanel() {
               {seccion === "planes" && "Catálogo de planes de internet y equipos en renta."}
               {seccion === "pagos" && "Historial de ingresos y facturación."}
               {seccion === "soporte" && "Tickets de falla reportados por los clientes."}
+        {seccion === "zonas" && "Administra los estados, municipios y colonias que se usan en los domicilios."}
               {seccion === "usuarios" && "Alta y baja de empleados del sistema."}
             </p>
           </div>
@@ -647,29 +1111,42 @@ function AdminPanel() {
         {/* ================= CLIENTES ================= */}
         {seccion === "clientes" && (
           <>
-            {/* --- código recién generado --- */}
+            {/* --- código recién generado (solo clientes CON cuenta) --- */}
             {creado && (
               <div className="panel-codigo">
-                <div>
-                  <span className="panel-codigo-tag">CÓDIGO DE ACTIVACIÓN (válido 24 h)</span>
-                  <strong className="panel-codigo-valor">{creado.codigoActivacion}</strong>
-                  <div className="panel-acciones-fila">
-                    <button
-                      type="button"
-                      className="panel-btn-mini"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(creado.codigoActivacion || "");
-                      }}
-                    >
-                      Copiar código
-                    </button>
+                {creado.codigoActivacion ? (
+                  <div>
+                    <span className="panel-codigo-tag">CÓDIGO DE ACTIVACIÓN (válido 24 h)</span>
+                    <strong className="panel-codigo-valor">{creado.codigoActivacion}</strong>
+                    <div className="panel-acciones-fila">
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        onClick={() => copiarCodigo(creado.codigoActivacion)}
+                      >
+                        {copiado ? "¡Copiado!" : "Copiar código"}
+                      </button>
+                    </div>
+                    <small>
+                      Para {creado.nombre} · {creado.email}
+                      <br />
+                      Vence el {fechaCorta(creado.codigoExpira)}
+                    </small>
                   </div>
-                  <small>
-                    Para {creado.nombre} · {creado.email}
-                    <br />
-                    Vence el {fechaCorta(creado.codigoExpira)}
-                  </small>
-                </div>
+                ) : (
+                  <div>
+                    <span className="panel-codigo-tag">CLIENTE SIN CUENTA EN LA WEB</span>
+                    <strong className="panel-codigo-valor chico">
+                      {creado.nombre}
+                    </strong>
+                    <small>
+                      Quedó registrado y activo. No necesita código: tú lo
+                      administras y le cobras desde su ficha.
+                      <br />
+                      {creado.email} · {creado.telefono}
+                    </small>
+                  </div>
+                )}
                 <button className="panel-codigo-cerrar" onClick={() => setCreado(null)}>
                   <X size={17} />
                 </button>
@@ -690,6 +1167,12 @@ function AdminPanel() {
 
               <div className="panel-acciones">
                 <span className="panel-total">{total} clientes</span>
+
+                <button className="panel-btn-sec" onClick={abrirZonas}>
+                  <Users size={17} />
+                  {verZonas ? "Ocultar zonas" : "Ver por zona"}
+                </button>
+
                 <button
                   className="panel-btn-primario"
                   onClick={() => {
@@ -697,6 +1180,7 @@ function AdminPanel() {
                     if (planes.length === 0) {
                       api.get("/planes").then(({ data }) => setPlanes(data)).catch(() => {});
                     }
+                    cargarMunicipios();
                   }}
                 >
                   <UserPlus size={17} />
@@ -707,7 +1191,7 @@ function AdminPanel() {
 
             {/* --- formulario de alta --- */}
             {nuevo && (
-              <form className="panel-form" onSubmit={crearCliente}>
+              <form className="panel-form" onSubmit={crearCliente} noValidate>
                 <div className="panel-form-grid">
                   <label>
                     Nombre
@@ -761,22 +1245,293 @@ function AdminPanel() {
                       ))}
                     </select>
                   </label>
+
+                  <label>
+                    Estado
+                    <div className="dom-fila">
+                      <select
+                        value={form.idEstado}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            idEstado: e.target.value,
+                            idMunicipio: "",
+                            idColonia: "",
+                            colonia: "",
+                          })
+                        }
+                      >
+                        <option value="">Selecciona estado</option>
+                        {estados.map((e) => (
+                          <option key={e.idEstado} value={e.idEstado}>
+                            {e.nombreEstado}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Agregar estado"
+                        onClick={() => abrirEditorZona("estado", null, "")}
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Editar el estado seleccionado"
+                        onClick={() => {
+                          const est = estados.find((x) => String(x.idEstado) === String(form.idEstado));
+                          if (!est) {
+                            setError("Selecciona un estado para editarlo.");
+                            return;
+                          }
+                          abrirEditorZona("estado", est.idEstado, est.nombreEstado);
+                        }}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                    </div>
+
+                    {editorZona?.tipo === "estado" && (
+                      <div className="dom-nuevo">
+                        <input
+                          placeholder="Nombre del estado"
+                          value={editorZona.valor}
+                          maxLength={60}
+                          onChange={(ev) => setEditorZona({ ...editorZona, valor: ev.target.value })}
+                        />
+                        <button type="button" className="panel-btn-primario chico" onClick={guardarZona}>
+                          {editorZona.id ? "Guardar" : "Agregar"}
+                        </button>
+                        <button type="button" className="panel-btn-sec chico" onClick={() => setEditorZona(null)}>
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </label>
+
+                  <label>
+                    Municipio
+                    <div className="dom-fila">
+                      <select
+                        value={form.idMunicipio}
+                        onChange={(e) => {
+                          const valor = e.target.value;
+                          setForm({ ...form, idMunicipio: valor, idColonia: "", colonia: "" });
+                          cargarColonias(valor);
+                        }}
+                      >
+                        <option value="">Selecciona municipio</option>
+                        {municipios
+                          .filter((m) => !form.idEstado || String(m.idEstado) === String(form.idEstado))
+                          .map((m) => (
+                            <option key={m.idMunicipio} value={m.idMunicipio}>
+                              {m.nombreMunicipio}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Agregar municipio"
+                        onClick={() => {
+                          setAgregandoMunicipio((v) => !v);
+                          setEditandoMunicipio(null);
+                          setNuevoMunicipio("");
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Editar el municipio seleccionado"
+                        onClick={abrirEditarMunicipio}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                    </div>
+
+                    {(agregandoMunicipio || editandoMunicipio) && (
+                      <div className="dom-nuevo">
+                        <input
+                          placeholder={
+                            editandoMunicipio ? "Nuevo nombre del municipio" : "Nombre del municipio"
+                          }
+                          value={nuevoMunicipio}
+                          maxLength={80}
+                          onChange={(e) => setNuevoMunicipio(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (editandoMunicipio) guardarMunicipioEditado();
+                              else agregarMunicipio();
+                            }
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          className="panel-btn-primario chico"
+                          onClick={editandoMunicipio ? guardarMunicipioEditado : agregarMunicipio}
+                        >
+                          {editandoMunicipio ? "Guardar" : "Agregar"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="panel-btn-sec chico"
+                          onClick={() => {
+                            setAgregandoMunicipio(false);
+                            setEditandoMunicipio(null);
+                            setNuevoMunicipio("");
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </label>
+
+                  <label>
+                    Colonia
+                    <div className="dom-fila">
+                      <select
+                        value={form.idColonia}
+                        onChange={(e) => {
+                          const col = colonias.find((c) => String(c.idColonia) === String(e.target.value));
+                          setForm({
+                            ...form,
+                            idColonia: e.target.value,
+                            colonia: col ? col.nombreColonia : "",
+                          });
+                        }}
+                      >
+                        <option value="">Selecciona colonia</option>
+                        {colonias.map((c) => (
+                          <option key={c.idColonia} value={c.idColonia}>
+                            {c.nombreColonia}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Agregar colonia"
+                        onClick={() => {
+                          if (!form.idMunicipio) {
+                            setError("Primero selecciona el municipio.");
+                            return;
+                          }
+                          abrirEditorZona("colonia", null, "");
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="panel-btn-mini"
+                        title="Editar la colonia seleccionada"
+                        onClick={() => {
+                          const col = colonias.find((c) => String(c.idColonia) === String(form.idColonia));
+                          if (!col) {
+                            setError("Selecciona una colonia para editarla.");
+                            return;
+                          }
+                          abrirEditorZona("colonia", col.idColonia, col.nombreColonia);
+                        }}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                    </div>
+
+                    {editorZona?.tipo === "colonia" && (
+                      <div className="dom-nuevo">
+                        <input
+                          placeholder="Nombre de la colonia"
+                          value={editorZona.valor}
+                          maxLength={80}
+                          onChange={(ev) => setEditorZona({ ...editorZona, valor: ev.target.value })}
+                        />
+                        <button type="button" className="panel-btn-primario chico" onClick={guardarZona}>
+                          {editorZona.id ? "Guardar" : "Agregar"}
+                        </button>
+                        <button type="button" className="panel-btn-sec chico" onClick={() => setEditorZona(null)}>
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </label>
+
+                  <label>
+                    Calle
+                    <input
+                      value={form.calle}
+                      onChange={(e) => setForm({ ...form, calle: e.target.value })}
+                      required
+                      maxLength={120}
+                    />
+                  </label>
+
+                  <label>
+                    Número
+                    <input
+                      value={form.numero}
+                      onChange={(e) => setForm({ ...form, numero: e.target.value })}
+                      required
+                      maxLength={10}
+                    />
+                  </label>
+
+                  <label>
+                    Código postal
+                    <input
+                      value={form.codigoPostal}
+                      onChange={(e) => setForm({ ...form, codigoPostal: e.target.value })}
+                      required
+                      maxLength={5}
+                      pattern="\d{5}"
+                    />
+                  </label>
                 </div>
 
-                <label className="panel-check">
-                  <input
-                    type="checkbox"
-                    checked={form.conCuenta}
-                    onChange={(e) => setForm({ ...form, conCuenta: e.target.checked })}
-                  />
-                  <span>
-                    Crear cuenta en la aplicación
-                    <small>
-                      Si lo desmarcas, el cliente queda registrado sin cuenta y solo
-                      tú podrás cobrarle y administrarlo.
-                    </small>
-                  </span>
-                </label>
+                <div className="panel-tipo-cuenta">
+                  <span className="panel-tipo-titulo">Tipo de cliente</span>
+
+                  <label className={form.conCuenta ? "tipo-opcion activa" : "tipo-opcion"}>
+                    <input
+                      type="radio"
+                      name="tipoCuenta"
+                      checked={form.conCuenta === true}
+                      onChange={() => setForm({ ...form, conCuenta: true })}
+                    />
+                    <span>
+                      <strong>Con cuenta en la web</strong>
+                      <small>Entra a la app con su correo y puede pagar en línea.</small>
+                    </span>
+                  </label>
+
+                  <label className={!form.conCuenta ? "tipo-opcion activa" : "tipo-opcion"}>
+                    <input
+                      type="radio"
+                      name="tipoCuenta"
+                      checked={form.conCuenta === false}
+                      onChange={() => setForm({ ...form, conCuenta: false })}
+                    />
+                    <span>
+                      <strong>Sin cuenta</strong>
+                      <small>No entra a la app; solo tú lo administras y le cobras.</small>
+                    </span>
+                  </label>
+                </div>
+
+                {error && <div className="panel-error">{error}</div>}
 
                 <div className="panel-form-acciones">
                   <button type="button" className="panel-btn-sec" onClick={() => setNuevo(false)}>
@@ -790,6 +1545,126 @@ function AdminPanel() {
             )}
 
             {error && <div className="panel-error">{error}</div>}
+
+            <div className="panel-filtros">
+              <select
+                className="panel-select"
+                value={filtros.idEstado}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, idEstado: e.target.value, idMunicipio: "" });
+                  setPagina(0);
+                  cargarEstados();
+                  cargarMunicipios();
+                }}
+              >
+                <option value="">Todos los estados</option>
+                {estados.map((e) => (
+                  <option key={e.idEstado} value={e.idEstado}>
+                    {e.nombreEstado}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="panel-select"
+                value={filtros.idMunicipio}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, idMunicipio: e.target.value });
+                  setPagina(0);
+                }}
+              >
+                <option value="">Todos los municipios</option>
+                {municipios
+                  .filter((m) => !filtros.idEstado || String(m.idEstado) === String(filtros.idEstado))
+                  .map((m) => (
+                    <option key={m.idMunicipio} value={m.idMunicipio}>
+                      {m.nombreMunicipio}
+                    </option>
+                  ))}
+              </select>
+
+              <select
+                className="panel-select"
+                value={filtros.estado}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, estado: e.target.value });
+                  setPagina(0);
+                }}
+              >
+                <option value="">Todos los estados de cuenta</option>
+                <option value="Activo">Activo</option>
+                <option value="Moroso">Moroso</option>
+                <option value="Inactivo">Inactivo</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+
+              <select
+                className="panel-select"
+                value={filtros.pagoMes}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, pagoMes: e.target.value });
+                  setPagina(0);
+                }}
+              >
+                <option value="">Pagos: todos</option>
+                <option value="si">Ya pagaron este mes</option>
+                <option value="no">Deben este mes</option>
+              </select>
+
+              <select
+                className="panel-select"
+                value={filtros.conCuenta}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, conCuenta: e.target.value });
+                  setPagina(0);
+                }}
+              >
+                <option value="">Cuenta: todas</option>
+                <option value="si">Con cuenta en la web</option>
+                <option value="no">Sin cuenta en la web</option>
+              </select>
+
+              <input
+                className="panel-select"
+                placeholder="Colonia…"
+                value={filtros.colonia}
+                onChange={(e) => {
+                  setFiltros({ ...filtros, colonia: e.target.value });
+                  setPagina(0);
+                }}
+              />
+            </div>
+
+            {verZonas && (
+              <div className="panel-tabla-scroll" style={{ marginBottom: "18px" }}>
+                <table className="panel-tabla">
+                  <thead>
+                    <tr>
+                      <th>Municipio</th>
+                      <th>Colonia</th>
+                      <th>Clientes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {zonas.length === 0 ? (
+                      <tr>
+                        <td colSpan={3}>
+                          Los clientes todavía no tienen domicilio registrado.
+                        </td>
+                      </tr>
+                    ) : (
+                      zonas.map((z, i) => (
+                        <tr key={`${z.municipio}-${z.colonia}-${i}`}>
+                          <td>{z.municipio}</td>
+                          <td>{z.colonia}</td>
+                          <td><strong>{z.total}</strong></td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {cargando ? (
               <div className="panel-estado">
@@ -855,10 +1730,10 @@ function AdminPanel() {
                                 </button>
                                 <button
                                   className="panel-btn-mini gris"
-                                  title="Generar código nuevo"
+                                  title="Generar código de activación nuevo"
                                   onClick={() => regenerarCodigo(c)}
                                 >
-                                  <KeyRound size={16} />
+                                  <RefreshCw size={16} />
                                 </button>
                               </>
                             )}
@@ -882,6 +1757,14 @@ function AdminPanel() {
                                 <Trash2 size={16} />
                               </button>
                             )}
+
+                            <button
+                              className="panel-btn-mini gris"
+                              title="Editar domicilio del cliente"
+                              onClick={() => abrirDomicilio(c)}
+                            >
+                              <MapPin size={16} />
+                            </button>
 
                             <button
                               className="panel-btn-mini gris"
@@ -1269,9 +2152,271 @@ function AdminPanel() {
           </>
         )}
 
+        {/* ================= ZONAS Y COLONIAS ================= */}
+        {seccion === "zonas" && (
+          <>
+            {error && <div className="panel-error">{error}</div>}
+
+            <div className="zona-admin">
+              {/* ---------- estado ---------- */}
+              <div className="zona-fila">
+                <span>Estado</span>
+                <div className="zona-controles">
+                  <select
+                    value={zonaEstado}
+                    onChange={(e) => {
+                      setZonaEstado(e.target.value);
+                      setZonaMunicipio("");
+                      setColonias([]);
+                    }}
+                  >
+                    <option value="">Selecciona estado</option>
+                    {estados.map((e) => (
+                      <option key={e.idEstado} value={e.idEstado}>{e.nombreEstado}</option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Agregar estado"
+                    onClick={() => setEditorZona({ tipo: "estado", id: null, valor: "" })}
+                  >
+                    <Plus size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Editar estado"
+                    onClick={() => {
+                      const est = estados.find((x) => String(x.idEstado) === String(zonaEstado));
+                      if (!est) { setError("Selecciona un estado para editarlo."); return; }
+                      setEditorZona({ tipo: "estado", id: est.idEstado, valor: est.nombreEstado });
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                </div>
+
+                {editorZona?.tipo === "estado" && (
+                  <div className="zona-editor">
+                    <input
+                      placeholder="Nombre del estado"
+                      value={editorZona.valor}
+                      maxLength={60}
+                      onChange={(ev) => setEditorZona({ ...editorZona, valor: ev.target.value })}
+                    />
+                    <button type="button" className="panel-btn-primario chico" onClick={guardarZona}>
+                      {editorZona.id ? "Guardar" : "Agregar"}
+                    </button>
+                    <button type="button" className="panel-btn-sec chico" onClick={() => setEditorZona(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* ---------- municipio ---------- */}
+              <div className="zona-fila">
+                <span>Municipio</span>
+                <div className="zona-controles">
+                  <select
+                    value={zonaMunicipio}
+                    onChange={(e) => {
+                      setZonaMunicipio(e.target.value);
+                      cargarColonias(e.target.value);
+                    }}
+                  >
+                    <option value="">Selecciona municipio</option>
+                    {municipios
+                      .filter((m) => !zonaEstado || String(m.idEstado) === String(zonaEstado))
+                      .map((m) => (
+                        <option key={m.idMunicipio} value={m.idMunicipio}>{m.nombreMunicipio}</option>
+                      ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Agregar municipio"
+                    onClick={() => {
+                      if (!zonaEstado) { setError("Primero selecciona el estado."); return; }
+                      setEditorZona({ tipo: "municipio", id: null, valor: "" });
+                    }}
+                  >
+                    <Plus size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Editar municipio"
+                    onClick={() => {
+                      const mun = municipios.find((x) => String(x.idMunicipio) === String(zonaMunicipio));
+                      if (!mun) { setError("Selecciona un municipio para editarlo."); return; }
+                      setEditorZona({ tipo: "municipio", id: mun.idMunicipio, valor: mun.nombreMunicipio });
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                </div>
+
+                {editorZona?.tipo === "municipio" && (
+                  <div className="zona-editor">
+                    <input
+                      placeholder="Nombre del municipio"
+                      value={editorZona.valor}
+                      maxLength={80}
+                      onChange={(ev) => setEditorZona({ ...editorZona, valor: ev.target.value })}
+                    />
+                    <button type="button" className="panel-btn-primario chico" onClick={guardarZona}>
+                      {editorZona.id ? "Guardar" : "Agregar"}
+                    </button>
+                    <button type="button" className="panel-btn-sec chico" onClick={() => setEditorZona(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* ---------- colonia ---------- */}
+              <div className="zona-fila">
+                <span>Colonia</span>
+                <div className="zona-controles">
+                  <select
+                    value={zonaColonia}
+                    onChange={(e) => setZonaColonia(e.target.value)}
+                  >
+                    <option value="">Selecciona colonia</option>
+                    {colonias.map((c) => (
+                      <option key={c.idColonia} value={c.idColonia}>{c.nombreColonia}</option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Agregar colonia"
+                    onClick={() => {
+                      if (!zonaMunicipio) { setError("Primero selecciona el municipio."); return; }
+                      setEditorZona({ tipo: "colonia", id: null, valor: "" });
+                    }}
+                  >
+                    <Plus size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="panel-btn-mini"
+                    title="Editar colonia"
+                    onClick={() => {
+                      const col = colonias.find((x) => String(x.idColonia) === String(zonaColonia));
+                      if (!col) { setError("Selecciona una colonia para editarla."); return; }
+                      setEditorZona({ tipo: "colonia", id: col.idColonia, valor: col.nombreColonia });
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                </div>
+
+                {editorZona?.tipo === "colonia" && (
+                  <div className="zona-editor">
+                    <input
+                      placeholder="Nombre de la colonia"
+                      value={editorZona.valor}
+                      maxLength={80}
+                      onChange={(ev) => setEditorZona({ ...editorZona, valor: ev.target.value })}
+                    />
+                    <button type="button" className="panel-btn-primario chico" onClick={guardarZona}>
+                      {editorZona.id ? "Guardar" : "Agregar"}
+                    </button>
+                    <button type="button" className="panel-btn-sec chico" onClick={() => setEditorZona(null)}>
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+
+                <div className="zona-resumen">
+                  {zonaMunicipio
+                    ? `${colonias.length} colonia(s) registradas en este municipio`
+                    : "Selecciona un municipio para ver sus colonias"}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* ================= SOPORTE ================= */}
         {seccion === "soporte" && (
           <>
+            <div className="panel-barra">
+              <span className="panel-total">{tickets.length} tickets en esta página</span>
+              <button className="panel-btn-primario" onClick={abrirNuevoTicket}>
+                <Plus size={17} />
+                Nuevo ticket
+              </button>
+            </div>
+
+            {nuevoTicket && (
+              <form className="panel-form" onSubmit={crearTicket}>
+                <div className="panel-form-grid">
+                  <label>
+                    Cliente
+                    <select
+                      value={formTicket.idCliente}
+                      onChange={(e) => setFormTicket({ ...formTicket, idCliente: e.target.value })}
+                      required
+                    >
+                      <option value="">Selecciona un cliente</option>
+                      {clientesLista.map((c) => (
+                        <option key={c.idCliente} value={c.idCliente}>
+                          {c.nombre} · {c.email}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Atiende
+                    <select
+                      value={formTicket.idEmpleado}
+                      onChange={(e) => setFormTicket({ ...formTicket, idEmpleado: e.target.value })}
+                      required
+                    >
+                      <option value="">Selecciona un empleado</option>
+                      {empleados.map((e) => (
+                        <option key={e.idEmpleado} value={e.idEmpleado}>
+                          {e.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  Falla reportada
+                  <textarea
+                    rows={3}
+                    maxLength={255}
+                    value={formTicket.descripcion}
+                    onChange={(e) => setFormTicket({ ...formTicket, descripcion: e.target.value })}
+                    required
+                    placeholder="Describe la falla que reporta el cliente"
+                  />
+                </label>
+
+                <div className="panel-form-acciones">
+                  <button type="button" className="panel-btn-sec" onClick={() => setNuevoTicket(false)}>
+                    Cancelar
+                  </button>
+                  <button type="submit" className="panel-btn-primario" disabled={guardandoTicket}>
+                    {guardandoTicket ? "Guardando…" : "Crear ticket"}
+                  </button>
+                </div>
+              </form>
+            )}
+
             {error && <div className="panel-error">{error}</div>}
 
             {cargandoTickets ? (
@@ -1291,6 +2436,7 @@ function AdminPanel() {
                       <th>Reportado</th>
                       <th>Atiende</th>
                       <th>Estado</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1311,6 +2457,15 @@ function AdminPanel() {
                             <option>En proceso</option>
                             <option>Cerrado</option>
                           </select>
+                        </td>
+                        <td>
+                          <button
+                            className="panel-btn-mini rojo"
+                            title="Eliminar ticket"
+                            onClick={() => borrarTicket(t)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1511,6 +2666,154 @@ function AdminPanel() {
         onConfirmar={hacerResetPassword}
         onCancelar={() => setResetCliente(null)}
       />
+
+      {/* ---------- modal: mi perfil (admin) ---------- */}
+      {editPerfil && (
+        <div className="modal-fondo" onClick={() => setEditPerfil(false)}>
+          <form className="modal-caja" onClick={(e) => e.stopPropagation()} onSubmit={guardarPerfil}>
+            <h3 className="modal-titulo">Mi perfil</h3>
+            <p className="modal-mensaje">Actualiza tu nombre y correo de acceso.</p>
+
+            <label className="ficha-campo">
+              Nombre
+              <input
+                value={formPerfil.nombre}
+                onChange={(e) => setFormPerfil({ ...formPerfil, nombre: e.target.value })}
+                required
+                maxLength={60}
+              />
+            </label>
+
+            <label className="ficha-campo">
+              Apellido
+              <input
+                value={formPerfil.apellido}
+                onChange={(e) => setFormPerfil({ ...formPerfil, apellido: e.target.value })}
+                maxLength={60}
+              />
+            </label>
+
+            <label className="ficha-campo">
+              Correo
+              <input
+                type="email"
+                value={formPerfil.email}
+                onChange={(e) => setFormPerfil({ ...formPerfil, email: e.target.value })}
+                required
+                maxLength={120}
+              />
+            </label>
+
+            {error && <div className="panel-error">{error}</div>}
+
+            <div className="modal-acciones">
+              <button type="button" className="modal-btn secundario" onClick={() => setEditPerfil(false)}>
+                Cancelar
+              </button>
+              <button type="submit" className="modal-btn peligro" disabled={guardandoPerfil}>
+                {guardandoPerfil ? "Guardando…" : "Guardar cambios"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ---------- modal: domicilio del cliente ---------- */}
+      {domCliente && (
+        <div className="modal-fondo" onClick={() => setDomCliente(null)}>
+          <form className="modal-caja" onClick={(e) => e.stopPropagation()} onSubmit={guardarDomicilio} noValidate>
+            <h3 className="modal-titulo">
+              Domicilio de {domCliente.nombre}
+            </h3>
+            <p className="modal-mensaje">
+              {formDom.idDomicilio
+                ? "Corrige la dirección de instalación."
+                : "Este cliente no tiene domicilio. Captúralo para poder instalarlo."}
+            </p>
+
+            <label className="ficha-campo">
+              Municipio
+              <select
+                value={formDom.idMunicipio}
+                onChange={(e) => {
+                  const valor = e.target.value;
+                  setFormDom({ ...formDom, idMunicipio: valor, idColonia: "", colonia: "" });
+                  if (valor) {
+                    api.get("/colonias", { params: { idMunicipio: Number(valor) } })
+                      .then(({ data }) => setColonias(Array.isArray(data) ? data : []))
+                      .catch(() => setColonias([]));
+                  } else {
+                    setColonias([]);
+                  }
+                }}
+              >
+                <option value="">Selecciona municipio</option>
+                {municipios.map((m) => (
+                  <option key={m.idMunicipio} value={m.idMunicipio}>{m.nombreMunicipio}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="ficha-campo">
+              Colonia
+              <select
+                value={formDom.idColonia}
+                onChange={(e) => {
+                  const col = colonias.find((c) => String(c.idColonia) === String(e.target.value));
+                  setFormDom({
+                    ...formDom,
+                    idColonia: e.target.value,
+                    colonia: col ? col.nombreColonia : "",
+                  });
+                }}
+              >
+                <option value="">Selecciona colonia</option>
+                {colonias.map((c) => (
+                  <option key={c.idColonia} value={c.idColonia}>{c.nombreColonia}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="ficha-campo">
+              Calle
+              <input
+                value={formDom.calle}
+                onChange={(e) => setFormDom({ ...formDom, calle: e.target.value })}
+                maxLength={120}
+              />
+            </label>
+
+            <label className="ficha-campo">
+              Número
+              <input
+                value={formDom.numero}
+                onChange={(e) => setFormDom({ ...formDom, numero: e.target.value })}
+                maxLength={10}
+              />
+            </label>
+
+            <label className="ficha-campo">
+              Código postal
+              <input
+                value={formDom.codigoPostal}
+                onChange={(e) => setFormDom({ ...formDom, codigoPostal: e.target.value })}
+                maxLength={5}
+              />
+            </label>
+
+            {error && <div className="panel-error">{error}</div>}
+
+            <div className="modal-acciones">
+              <button type="button" className="modal-btn secundario" onClick={() => setDomCliente(null)}>
+                Cancelar
+              </button>
+              <button type="submit" className="modal-btn peligro" disabled={guardandoDom}>
+                {guardandoDom ? "Guardando…" : "Guardar domicilio"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* ---------- modal: editar cliente ---------- */}
       {editCliente && (

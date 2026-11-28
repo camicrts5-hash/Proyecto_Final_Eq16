@@ -1,5 +1,45 @@
 /* Pantalla de cuenta pendiente — diseño sobrio, sin tarjetas "de IA" */
 
+.pend-dom {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pend-dom label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.pend-dom input,
+.pend-dom select {
+  padding: 10px 12px;
+  border: 1px solid #dde3ec;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1f2937;
+  outline: none;
+  background: #fff;
+}
+
+.pend-dom input:focus,
+.pend-dom select:focus {
+  border-color: #0f2a4a;
+}
+
+.pend-error-carga {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #b02a37;
+}
+
 .pend {
   min-height: 100vh;
   background: #ffffff;

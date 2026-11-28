@@ -239,6 +239,43 @@ public class AuthService {
         usuarioRepository.save(usuario);
     }
 
+    // -----------------------------------------------------------------
+    // El usuario autenticado actualiza sus propios datos
+    // -----------------------------------------------------------------
+    @Transactional
+    public AuthResponse actualizarPerfil(
+            String emailActual,
+            com.enlasate.backend.dto.PerfilRequest request) {
+
+        Usuario usuario = usuarioRepository.findByEmail(emailActual)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No se encontró el usuario"
+                        )
+                );
+
+        String nuevoEmail = request.email().trim().toLowerCase();
+
+        if (!usuario.getEmail().equalsIgnoreCase(nuevoEmail)
+                && usuarioRepository.existsByEmail(nuevoEmail)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ese correo ya está registrado por otro usuario"
+            );
+        }
+
+        usuario.setNombre(request.nombre().trim());
+        usuario.setApellido(request.apellido() != null ? request.apellido().trim() : "");
+        usuario.setEmail(nuevoEmail);
+
+        usuarioRepository.save(usuario);
+
+        // Token nuevo porque el correo cambió
+        return generarRespuesta(usuario);
+    }
+
     private AuthResponse generarRespuesta(Usuario usuario) {
         String token = jwtService.generateToken(usuario.getEmail());
 

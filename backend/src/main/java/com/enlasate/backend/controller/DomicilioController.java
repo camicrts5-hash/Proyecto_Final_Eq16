@@ -37,7 +37,7 @@ public class DomicilioController {
     }
 
     @GetMapping("/cliente/{idCliente}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<List<DomicilioResponse>> buscarPorCliente(
             @PathVariable Integer idCliente) {
         return ResponseEntity.ok(

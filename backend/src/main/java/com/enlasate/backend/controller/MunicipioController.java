@@ -19,24 +19,42 @@ public class MunicipioController {
         this.municipioService = municipioService;
     }
 
+    // Catálogo público: cualquier usuario (o visitante) lo puede consultar
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<List<MunicipioResponse>> listar() {
         return ResponseEntity.ok(municipioService.listar());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<MunicipioResponse> buscarPorId(
             @PathVariable Integer id) {
         return ResponseEntity.ok(municipioService.buscarPorId(id));
     }
 
     @GetMapping("/estado/{idEstado}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<List<MunicipioResponse>> buscarPorEstado(
             @PathVariable Integer idEstado) {
         return ResponseEntity.ok(
                 municipioService.buscarPorEstado(idEstado));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MunicipioResponse> crear(
+            @jakarta.validation.Valid @RequestBody
+            com.enlasate.backend.dto.MunicipioRequest request) {
+
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(municipioService.crear(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<MunicipioResponse> actualizar(
+            @PathVariable Integer id,
+            @jakarta.validation.Valid @RequestBody
+            com.enlasate.backend.dto.MunicipioRequest request) {
+
+        return ResponseEntity.ok(municipioService.actualizar(id, request));
     }
 }

@@ -13,6 +13,7 @@ import {
   User,
   Gauge,
   LogOut,
+  LifeBuoy,
 } from "lucide-react";
 import api from "../services/api";
 import "./Dashboard.css";
@@ -120,6 +121,10 @@ function HistorialPagos() {
           <button className="sidebar-link" onClick={() => navigate("/mi-estado-cuenta")}>
             <CalendarDays size={19} /> Mi estado de cuenta
           </button>
+
+          <button className="sidebar-link" onClick={() => navigate("/reportar-falla")}>
+            <LifeBuoy size={19} /> Reportar falla
+          </button>
         </div>
 
         <div className="sidebar-bottom">
@@ -172,21 +177,6 @@ function HistorialPagos() {
             <div>
               <span>Pagos registrados</span>
               <strong>{pagos.length}</strong>
-            </div>
-          </article>
-
-          <article className="historial-summary-card">
-            <div className="summary-icon">
-              <CreditCard size={23} />
-            </div>
-            <div>
-              <span>Total pagado</span>
-              <strong>
-                ${totalPagado.toLocaleString("es-MX", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </strong>
             </div>
           </article>
         </section>

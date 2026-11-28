@@ -128,8 +128,10 @@ public class CompraService {
         Cliente cliente = compra.getCliente();
         Equipo equipo = compra.getEquipo();
 
-        String nombreCliente = cliente.getUsuario().getNombre()
-            + " " + cliente.getUsuario().getApellido();
+        String nombreCliente = cliente.getUsuario() != null
+            ? (cliente.getUsuario().getNombre() + " "
+                + (cliente.getUsuario().getApellido() != null ? cliente.getUsuario().getApellido() : "")).trim()
+            : cliente.getNombreContacto();
 
         return new CompraResponse(
             compra.getIdCompra(),

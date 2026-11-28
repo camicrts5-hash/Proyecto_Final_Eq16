@@ -18,4 +18,22 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Si el token ya no sirve (usuario borrado, sesión expirada),
+// se limpia la sesión y se manda al login
+api.interceptors.response.use(
+    (respuesta) => respuesta,
+    (error) => {
+        const status = error?.response?.status;
+        const enLogin = window.location.pathname.startsWith('/login');
+
+        if (status === 401 && !enLogin) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+            window.location.href = '/login';
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 export default api;

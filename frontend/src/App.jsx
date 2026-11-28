@@ -3,6 +3,8 @@ import AdminPanel from "./pages/AdminPanel";
 import PendienteInstalacion from "./pages/PendienteInstalacion";
 import FichaCliente from "./pages/FichaCliente";
 import RecuperarPassword from "./pages/RecuperarPassword";
+import ReportarFalla from "./pages/ReportarFalla";
+import OAuth2Redirect from "./pages/OAuth2Redirect";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MetodoPago from "./pages/MetodoPago";
@@ -46,6 +48,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Login />} />
 
+        {/* REGRESO DEL LOGIN CON GOOGLE */}
+        <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+
         {/* RECUPERACIÓN DE CONTRASEÑA */}
         <Route path="/recuperar" element={<RecuperarPassword />} />
         <Route path="/restablecer" element={<RecuperarPassword />} />
@@ -75,6 +80,15 @@ function App() {
           element={
             <RutaProtegida rolPermitido="CLIENTE">
               <MetodoPago />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/reportar-falla"
+          element={
+            <RutaProtegida rolPermitido="CLIENTE">
+              <ReportarFalla />
             </RutaProtegida>
           }
         />

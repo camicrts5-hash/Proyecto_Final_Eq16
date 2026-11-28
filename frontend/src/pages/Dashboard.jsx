@@ -12,6 +12,7 @@ import { Receipt,
   ShieldCheck,
   KeyRound,
   CalendarDays,
+  LifeBuoy,
 } from "lucide-react";
 import api from "../services/api";
 import CambiarPassword from "../components/CambiarPassword";
@@ -39,38 +40,36 @@ function Dashboard() {
   }, [navigate]);
 
   const cargarPlanes = async () => {
+    setCargando(true);
+    setError("");
+
+    // 1. Planes: se intentan siempre, sin depender de lo demás
+    let planesDisponibles = [];
+
     try {
-      setCargando(true);
-      setError("");
-
-      // Obtener todos los planes disponibles
-      const respuestaPlanes = await api.get("/planes");
-      const planesDisponibles = respuestaPlanes.data;
-
+      const { data } = await api.get("/planes");
+      planesDisponibles = Array.isArray(data) ? data : [];
       setPlanes(planesDisponibles);
+    } catch (err) {
+      setPlanes([]);
+    }
 
-      // Obtener los datos del cliente autenticado
-      const respuestaCliente = await api.get("/clientes/mi-plan");
+    // 2. Datos del cliente: si no tiene ficha, igual puede elegir plan
+    try {
+      const { data } = await api.get("/clientes/mi-plan");
+      setCliente(data);
 
-      setCliente(respuestaCliente.data);
-
-      // Recuperar el plan que tiene asignado
-      if (respuestaCliente.data.plan) {
+      if (data?.plan) {
         const planActual = planesDisponibles.find(
-          (plan) => plan.nombrePlan === respuestaCliente.data.plan
+          (plan) => plan.nombrePlan === data.plan
         );
-
         setPlanSeleccionado(planActual ? planActual.idPlan : null);
       } else {
         setPlanSeleccionado(null);
       }
     } catch (err) {
-      console.error("Error al cargar información:", err);
-
-      setError(
-        err.response?.data?.message ||
-          "No se pudo cargar la información. Intenta nuevamente."
-      );
+      setCliente(null);
+      setPlanSeleccionado(null);
     } finally {
       setCargando(false);
     }
@@ -79,8 +78,8 @@ function Dashboard() {
   // Enviar al usuario a la pantalla de pago con el plan elegido
   const seleccionarPlan = async (plan) => {
     // ¿Todavía necesita activarse o elegir asesor?
-    const faltaActivar =
-      !cliente || cliente.estado === "Pendiente" || !cliente.empleado;
+    // Solo necesita activarse si sigue Pendiente. El asesor es opcional.
+    const faltaActivar = !cliente || cliente.estado === "Pendiente";
 
     // El cliente NO puede cambiarse el plan: solo contacta a su asesor.
     // El cambio lo hace el empleado o el administrador.
@@ -136,6 +135,14 @@ function Dashboard() {
           >
             <CalendarDays size={19} />
             Mi estado de cuenta
+          </button>
+
+          <button
+            className="sidebar-link"
+            onClick={() => navigate("/reportar-falla")}
+          >
+            <LifeBuoy size={19} />
+            Reportar falla
           </button>
         </div>
 

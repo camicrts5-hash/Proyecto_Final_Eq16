@@ -64,6 +64,20 @@ public class AuthController {
     }
 
     // -----------------------------------------------------------------
+    // Actualizar el perfil propio (solo administrador)
+    // -----------------------------------------------------------------
+    @PutMapping("/perfil")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> actualizarPerfil(
+            @Valid @RequestBody com.enlasate.backend.dto.PerfilRequest request,
+            org.springframework.security.core.Authentication authentication) {
+
+        return ResponseEntity.ok(
+                authService.actualizarPerfil(authentication.getName(), request)
+        );
+    }
+
+    // -----------------------------------------------------------------
     // Recuperación de contraseña (público)
     // -----------------------------------------------------------------
     @PostMapping("/recuperar")

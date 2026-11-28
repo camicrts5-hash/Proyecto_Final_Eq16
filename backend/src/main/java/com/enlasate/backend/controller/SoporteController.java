@@ -68,9 +68,40 @@ public class SoporteController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<Void> eliminar(@PathVariable Integer id) {
         soporteService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // -----------------------------------------------------------------
+    // El cliente autenticado reporta una falla
+    // -----------------------------------------------------------------
+    @PostMapping("/mi-ticket")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<SoporteResponse> reportarFalla(
+            @Valid @RequestBody com.enlasate.backend.dto.SoporteClienteRequest request,
+            org.springframework.security.core.Authentication authentication) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            soporteService.registrarPorCliente(
+                authentication.getName(),
+                request.descripcion()
+            )
+        );
+    }
+
+    // -----------------------------------------------------------------
+    // Tickets del cliente autenticado
+    // -----------------------------------------------------------------
+    @GetMapping("/mis-tickets")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Page<SoporteResponse>> misTickets(
+            Pageable pageable,
+            org.springframework.security.core.Authentication authentication) {
+
+        return ResponseEntity.ok(
+            soporteService.listarPorEmail(authentication.getName(), pageable)
+        );
     }
 }

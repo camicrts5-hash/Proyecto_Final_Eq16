@@ -1,5 +1,19 @@
 /* Ficha / estado de cuenta — usa el layout .dashboard de Dashboard.css */
 
+.ficha-direccion {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7686;
+}
+
+.ficha-direccion svg {
+  flex-shrink: 0;
+  color: #9aa4b2;
+}
+
 .ficha-datos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

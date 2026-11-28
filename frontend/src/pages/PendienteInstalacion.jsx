@@ -28,6 +28,15 @@ function PendienteInstalacion() {
   const [verPlanes, setVerPlanes] = useState(false);
   const [estadoCuenta, setEstadoCuenta] = useState(null);
 
+  // ---------- domicilio ----------
+  const [municipios, setMunicipios] = useState([]);
+  const [errorCarga, setErrorCarga] = useState("");
+  const [tieneDomicilio, setTieneDomicilio] = useState(false);
+  const [guardandoDom, setGuardandoDom] = useState(false);
+  const [domicilio, setDomicilio] = useState({
+    idMunicipio: "", calle: "", numero: "", colonia: "", codigoPostal: "",
+  });
+
   useEffect(() => {
     api.get("/empleados")
       .then(({ data }) => setEmpleados(data))
@@ -36,7 +45,61 @@ function PendienteInstalacion() {
     api.get("/clientes/mi-plan")
       .then(({ data }) => setEstadoCuenta(data))
       .catch(() => setEstadoCuenta(null));
+
+    api.get("/municipios")
+      .then(({ data }) => {
+        setMunicipios(Array.isArray(data) ? data : []);
+        setErrorCarga("");
+      })
+      .catch((e) => {
+        setMunicipios([]);
+        setErrorCarga(
+          e?.response?.status
+            ? `No se pudieron cargar los municipios (error ${e.response.status}).`
+            : "No se pudieron cargar los municipios. Revisa tu conexión."
+        );
+      });
+
+    api.get("/clientes/mi-domicilio")
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const d = data[0];
+          setDomicilio({
+            idMunicipio: d.idMunicipio || "",
+            calle: d.calle || "",
+            numero: d.numero || "",
+            colonia: d.colonia || "",
+            codigoPostal: d.codigoPostal || "",
+          });
+          setTieneDomicilio(true);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const guardarDomicilio = async () => {
+    setError("");
+
+    if (!domicilio.idMunicipio || !domicilio.calle || !domicilio.numero
+        || !domicilio.colonia || domicilio.codigoPostal.length !== 5) {
+      setError("Completa tu domicilio: municipio, colonia, calle, número y código postal de 5 dígitos.");
+      return;
+    }
+
+    setGuardandoDom(true);
+    try {
+      await api.put("/clientes/mi-domicilio", {
+        ...domicilio,
+        idMunicipio: Number(domicilio.idMunicipio),
+      });
+      setTieneDomicilio(true);
+    } catch (e) {
+      const d = e?.response?.data;
+      setError(d?.message || d?.mensaje || "No se pudo guardar el domicilio.");
+    } finally {
+      setGuardandoDom(false);
+    }
+  };
 
   const abrirPlanes = () => {
     setVerPlanes((v) => !v);
@@ -52,12 +115,11 @@ function PendienteInstalacion() {
     setError("");
     setEnviando(true);
 
+    // Se intenta guardar el asesor, pero si falla NO se bloquea el WhatsApp
     try {
       await api.put("/clientes/mi-empleado", { idEmpleado: elegido.idEmpleado });
     } catch (e) {
-      setError("No se pudo guardar tu asesor. Intenta de nuevo.");
-      setEnviando(false);
-      return;
+      console.warn("No se pudo guardar el asesor:", e?.response?.status);
     }
 
     setEnviando(false);

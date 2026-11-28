@@ -123,9 +123,25 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             HttpServletRequest request) {
 
+        String detalle = ex.getMostSpecificCause() != null
+                ? ex.getMostSpecificCause().getMessage()
+                : "";
+
+        String mensaje = "No se puede completar la operación: el registro está "
+                + "relacionado con otros datos del sistema.";
+
+        if (detalle != null) {
+            String d = detalle.toLowerCase();
+
+            if (d.contains("foreign key") || d.contains("constraint")) {
+                mensaje = "No se puede eliminar porque el registro tiene datos "
+                        + "relacionados (pagos, clientes o tickets).";
+            }
+        }
+
         return crearRespuesta(
                 HttpStatus.CONFLICT,
-                "Existe un conflicto con los datos enviados",
+                mensaje,
                 request
         );
     }
@@ -135,6 +151,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> manejarErrorGeneral(
             Exception ex,
             HttpServletRequest request) {
+
+        // Deja el error real en el log para poder diagnosticarlo
+        org.slf4j.LoggerFactory
+                .getLogger(GlobalExceptionHandler.class)
+                .error("ERROR NO CONTROLADO en {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         return crearRespuesta(
                 HttpStatus.INTERNAL_SERVER_ERROR,

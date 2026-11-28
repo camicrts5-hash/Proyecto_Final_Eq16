@@ -24,4 +24,8 @@ public class Domicilio {
     private String numero;
     private String colonia;
     private String codigoPostal;
+
+    // Colonia del catalogo (opcional, para reportes por zona)
+    @Column(name = "id_colonia")
+    private Integer idColonia;
 }

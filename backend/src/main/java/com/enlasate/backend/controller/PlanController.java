@@ -24,13 +24,11 @@ public class PlanController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<List<PlanResponse>> listar() {
         return ResponseEntity.ok(planService.listar());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<PlanResponse> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(planService.buscarPorId(id));
     }

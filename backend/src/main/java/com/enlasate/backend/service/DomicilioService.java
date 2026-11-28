@@ -83,6 +83,7 @@ public class DomicilioService {
         domicilio.setNumero(request.numero());
         domicilio.setColonia(request.colonia());
         domicilio.setCodigoPostal(request.codigoPostal());
+        domicilio.setIdColonia(request.idColonia());
 
         return convertirResponse(domicilioRepository.save(domicilio));
     }
@@ -108,6 +109,7 @@ public class DomicilioService {
         domicilio.setNumero(request.numero());
         domicilio.setColonia(request.colonia());
         domicilio.setCodigoPostal(request.codigoPostal());
+        domicilio.setIdColonia(request.idColonia());
 
         return convertirResponse(domicilioRepository.save(domicilio));
     }
@@ -123,16 +125,32 @@ public class DomicilioService {
 
     private DomicilioResponse convertirResponse(Domicilio domicilio) {
 
+        // Un cliente sin cuenta en la web no tiene usuario: se usa el contacto
+        String nombreCliente;
+
+        if (domicilio.getCliente() == null) {
+            nombreCliente = null;
+        } else if (domicilio.getCliente().getUsuario() != null) {
+            nombreCliente = (domicilio.getCliente().getUsuario().getNombre() + " "
+                    + (domicilio.getCliente().getUsuario().getApellido() != null
+                        ? domicilio.getCliente().getUsuario().getApellido() : "")).trim();
+        } else {
+            nombreCliente = domicilio.getCliente().getNombreContacto();
+        }
+
         return new DomicilioResponse(
                 domicilio.getIdDomicilio(),
-                domicilio.getCliente().getIdCliente(),
-                domicilio.getCliente().getUsuario().getNombre() + " "
-                        + domicilio.getCliente().getUsuario().getApellido(),
-                domicilio.getMunicipio().getIdMunicipio(),
+                domicilio.getCliente() != null ? domicilio.getCliente().getIdCliente() : null,
+                nombreCliente,
+                domicilio.getMunicipio() != null ? domicilio.getMunicipio().getIdMunicipio() : null,
+                domicilio.getMunicipio() != null ? domicilio.getMunicipio().getNombreMunicipio() : null,
+                domicilio.getMunicipio() != null && domicilio.getMunicipio().getEstado() != null
+                        ? domicilio.getMunicipio().getEstado().getNombreEstado() : null,
                 domicilio.getCalle(),
                 domicilio.getNumero(),
                 domicilio.getColonia(),
-                domicilio.getCodigoPostal()
+                domicilio.getCodigoPostal(),
+                domicilio.getIdColonia()
         );
     }
 }

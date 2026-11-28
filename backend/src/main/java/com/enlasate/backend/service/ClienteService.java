@@ -39,6 +39,7 @@ public class ClienteService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final com.enlasate.backend.repository.PeriodoServicioRepository periodoRepository;
+    private final DomicilioService domicilioService;
 
     public ClienteService(
             ClienteRepository clienteRepository,
@@ -48,7 +49,8 @@ public class ClienteService {
             RolRepository rolRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            com.enlasate.backend.repository.PeriodoServicioRepository periodoRepository) {
+            com.enlasate.backend.repository.PeriodoServicioRepository periodoRepository,
+            DomicilioService domicilioService) {
 
         this.clienteRepository = clienteRepository;
         this.planRepository = planRepository;
@@ -58,16 +60,44 @@ public class ClienteService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.periodoRepository = periodoRepository;
+        this.domicilioService = domicilioService;
     }
 
     @Transactional(readOnly = true)
-    public Page<ClienteResponse> listar(String q, Pageable pageable) {
+    public Page<ClienteResponse> listar(
+            String q, String estado, Boolean conCuenta,
+            Integer idEstado, Integer idMunicipio,
+            String colonia, Boolean pagoMes, Pageable pageable) {
 
-        Page<Cliente> pagina = (q == null || q.isBlank())
-                ? clienteRepository.findAll(pageable)
-                : clienteRepository.buscar(q.trim(), pageable);
+        String mes = java.time.YearMonth.now().toString();
 
-        return pagina.map(this::convertirRespuesta);
+        return clienteRepository.filtrar(
+                (q == null || q.isBlank()) ? null : q.trim(),
+                (estado == null || estado.isBlank()) ? null : estado,
+                conCuenta,
+                idEstado,
+                idMunicipio,
+                (colonia == null || colonia.isBlank()) ? null : colonia.trim(),
+                pagoMes,
+                mes,
+                pageable
+        ).map(this::convertirRespuesta);
+    }
+
+    // -----------------------------------------------------------------
+    // Clientes agrupados por municipio y colonia
+    // -----------------------------------------------------------------
+    @Transactional(readOnly = true)
+    public java.util.List<com.enlasate.backend.dto.ZonaResponse> porZona() {
+
+        return clienteRepository.agruparPorZona()
+                .stream()
+                .map(fila -> new com.enlasate.backend.dto.ZonaResponse(
+                        fila[0] != null ? fila[0].toString() : "Sin municipio",
+                        fila[1] != null ? fila[1].toString() : "Sin colonia",
+                        ((Number) fila[2]).longValue()
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -214,7 +244,21 @@ public ClienteResponse consultarMiPlan(String email) {
                         )
                 );
 
+        Usuario usuarioCuenta = cliente.getUsuario();
+
+        // Se borra la ficha del cliente primero
         clienteRepository.delete(cliente);
+
+        // Y con ella su acceso: la cuenta queda inactiva y libera el correo
+        if (usuarioCuenta != null) {
+            usuarioCuenta.setEstado("Inactivo");
+
+            // Se libera el correo para que se pueda volver a registrar
+            usuarioCuenta.setEmail(
+                    "eliminado_" + usuarioCuenta.getIdUsuario() + "@enlasate.local");
+
+            usuarioRepository.save(usuarioCuenta);
+        }
     }
 
     // -----------------------------------------------------------------
@@ -400,6 +444,17 @@ public ClienteResponse consultarMiPlan(String email) {
         }
 
         clienteRepository.save(cliente);
+
+        // Domicilio obligatorio del cliente
+        domicilioService.registrar(new com.enlasate.backend.dto.DomicilioRequest(
+                cliente.getIdCliente(),
+                request.idMunicipio(),
+                request.calle(),
+                request.numero(),
+                request.colonia(),
+                request.codigoPostal(),
+                request.idColonia()
+        ));
 
         return convertirRespuesta(cliente);
     }
@@ -608,6 +663,46 @@ public ClienteResponse consultarMiPlan(String email) {
         clienteRepository.save(cliente);
 
         return convertirRespuesta(cliente);
+    }
+
+    // -----------------------------------------------------------------
+    // Domicilio del cliente autenticado
+    // -----------------------------------------------------------------
+    @Transactional(readOnly = true)
+    public java.util.List<com.enlasate.backend.dto.DomicilioResponse> miDomicilio(String email) {
+
+        return clienteRepository.findByUsuario_Email(email)
+                .map(c -> domicilioService.buscarPorCliente(c.getIdCliente()))
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No se encontró el cliente asociado a esta cuenta"));
+    }
+
+    @Transactional
+    public void guardarMiDomicilio(
+            String email,
+            com.enlasate.backend.dto.DomicilioRequest request) {
+
+        Cliente cliente = clienteRepository.findByUsuario_Email(email)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "No se encontró el cliente asociado a esta cuenta"));
+
+        var existentes = domicilioService.buscarPorCliente(cliente.getIdCliente());
+
+        var datos = new com.enlasate.backend.dto.DomicilioRequest(
+                cliente.getIdCliente(),
+                request.idMunicipio(),
+                request.calle(),
+                request.numero(),
+                request.colonia(),
+                request.codigoPostal(),
+                request.idColonia()
+        );
+
+        if (existentes.isEmpty()) {
+            domicilioService.registrar(datos);
+        } else {
+            domicilioService.actualizar(existentes.get(0).idDomicilio(), datos);
+        }
     }
 
     private String generarCodigo() {

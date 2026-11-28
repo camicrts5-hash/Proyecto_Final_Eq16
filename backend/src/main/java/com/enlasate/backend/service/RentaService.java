@@ -138,8 +138,11 @@ public class RentaService {
         return new RentaResponse(
                 renta.getIdRenta(),
                 renta.getCliente().getIdCliente(),
-                renta.getCliente().getUsuario().getNombre() + " "
-                        + renta.getCliente().getUsuario().getApellido(),
+                renta.getCliente().getUsuario() != null
+                        ? (renta.getCliente().getUsuario().getNombre() + " "
+                            + (renta.getCliente().getUsuario().getApellido() != null
+                                ? renta.getCliente().getUsuario().getApellido() : "")).trim()
+                        : renta.getCliente().getNombreContacto(),
                 renta.getEquipo().getIdEquipo(),
                 renta.getEquipo().getModelo(),
                 renta.getEquipo().getMarca(),

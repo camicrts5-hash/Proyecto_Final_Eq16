@@ -28,5 +28,28 @@ public record NuevoClienteRequest(
 
         // true  = se le crea cuenta para que entre a la app (con código)
         // false = solo queda el registro, sin cuenta (adultos mayores, etc.)
-        Boolean conCuenta
+        Boolean conCuenta,
+
+        // ------------------ Domicilio (obligatorio) ------------------
+        @jakarta.validation.constraints.NotNull(message = "Selecciona el municipio")
+        @jakarta.validation.constraints.Positive(message = "El municipio no es válido")
+        Integer idMunicipio,
+
+        @NotBlank(message = "La calle es obligatoria")
+        @Size(max = 120)
+        String calle,
+
+        @NotBlank(message = "El número es obligatorio")
+        @Size(max = 10)
+        String numero,
+
+        @NotBlank(message = "La colonia es obligatoria")
+        @Size(max = 80)
+        String colonia,
+
+        @NotBlank(message = "El código postal es obligatorio")
+        @Pattern(regexp = "\\d{5}", message = "El código postal debe tener 5 dígitos")
+        String codigoPostal,
+
+        Integer idColonia
 ) {}

@@ -40,7 +40,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             AuthenticationEntryPoint authenticationEntryPoint,
-            AccessDeniedHandler accessDeniedHandler) throws Exception {
+            AccessDeniedHandler accessDeniedHandler,
+            OAuth2SuccessHandler oAuth2SuccessHandler,
+            org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+
+        // Fuerza a Google a mostrar el selector de cuentas en cada intento
+        org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver resolver =
+                new org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver(
+                        clientRegistrationRepository, "/oauth2/authorization");
+
+        resolver.setAuthorizationRequestCustomizer(builder ->
+                builder.additionalParameters(params -> params.put("prompt", "select_account")));
 
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -48,7 +58,13 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
 
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
+
+            .oauth2Login(oauth -> oauth
+                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver))
+                .successHandler(oAuth2SuccessHandler)
+                .failureUrl("/login?error=google")
             )
 
             .exceptionHandling(exception -> exception
@@ -58,7 +74,13 @@ public class SecurityConfig {
 
           .authorizeHttpRequests(auth -> auth
     .requestMatchers("/api/auth/login", "/api/auth/registro").permitAll()
+    .requestMatchers("/api/auth/recuperar", "/api/auth/restablecer").permitAll()
     .requestMatchers("/api/auth/logout").authenticated()
+    .requestMatchers("/oauth2/**", "/login/oauth2/**", "/login").permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/planes", "/api/planes/**").permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/estados", "/api/estados/**").permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/municipios", "/api/municipios/**").permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/colonias", "/api/colonias/**").permitAll()
     .anyRequest().authenticated()
 )
 
@@ -89,7 +111,11 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "http://127.0.0.1:5173"
+            "http://127.0.0.1:5173",
+            "https://enlasate.online",
+            "https://www.enlasate.online",
+            "http://enlasate.online",
+            "http://www.enlasate.online"
         ));
 
         configuration.setAllowedMethods(List.of(

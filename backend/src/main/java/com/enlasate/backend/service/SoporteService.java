@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class SoporteService {
 
@@ -47,6 +49,42 @@ public class SoporteService {
     public Page<SoporteResponse> listarPorEmpleado(
             Integer idEmpleado, Pageable pageable) {
         return soporteRepository.findByEmpleado_IdEmpleado(idEmpleado, pageable)
+            .map(this::convertirRespuesta);
+    }
+
+    // -----------------------------------------------------------------
+    // El cliente autenticado reporta una falla
+    // -----------------------------------------------------------------
+    @Transactional
+    public SoporteResponse registrarPorCliente(String email, String descripcion) {
+
+        Cliente cliente = clienteRepository.findByUsuario_Email(email)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "No se encontró el cliente asociado a esta cuenta"));
+
+        SoporteTecnico ticket = new SoporteTecnico();
+
+        ticket.setCliente(cliente);
+        // Se asigna solo a su asesor (puede ser null si no tiene)
+        ticket.setEmpleado(cliente.getEmpleado());
+        ticket.setDescripcionFalla(descripcion.trim());
+        ticket.setFechaReporte(LocalDateTime.now());
+        ticket.setEstadoTicket("Abierto");
+
+        return convertirRespuesta(soporteRepository.save(ticket));
+    }
+
+    // -----------------------------------------------------------------
+    // Tickets del cliente autenticado
+    // -----------------------------------------------------------------
+    @Transactional(readOnly = true)
+    public Page<SoporteResponse> listarPorEmail(String email, Pageable pageable) {
+
+        Cliente cliente = clienteRepository.findByUsuario_Email(email)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "No se encontró el cliente asociado a esta cuenta"));
+
+        return soporteRepository.findByCliente_IdCliente(cliente.getIdCliente(), pageable)
             .map(this::convertirRespuesta);
     }
 
@@ -145,11 +183,15 @@ public class SoporteService {
         Cliente cliente = ticket.getCliente();
         Empleado empleado = ticket.getEmpleado();
 
-        String nombreCliente = cliente.getUsuario().getNombre()
-            + " " + cliente.getUsuario().getApellido();
+        String nombreCliente = cliente != null && cliente.getUsuario() != null
+            ? (cliente.getUsuario().getNombre() + " "
+                + (cliente.getUsuario().getApellido() != null ? cliente.getUsuario().getApellido() : "")).trim()
+            : (cliente != null ? cliente.getNombreContacto() : "Sin cliente");
 
-        String nombreEmpleado = empleado.getUsuario().getNombre()
-            + " " + empleado.getUsuario().getApellido();
+        String nombreEmpleado = empleado != null && empleado.getUsuario() != null
+            ? (empleado.getUsuario().getNombre() + " "
+                + (empleado.getUsuario().getApellido() != null ? empleado.getUsuario().getApellido() : "")).trim()
+            : "Sin asignar";
 
         return new SoporteResponse(
             ticket.getIdTicket(),

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Wifi, Gauge, Users, Radio, Receipt, LifeBuoy, UserCog,
   LogOut, User, CheckCircle2, Circle, MinusCircle, Wallet,
-  ArrowLeft, LoaderCircle, KeyRound, CalendarDays, Clock,
+  ArrowLeft, LoaderCircle, KeyRound, CalendarDays, Clock, MapPin,
 } from "lucide-react";
 import api from "../services/api";
 import CambiarPassword from "../components/CambiarPassword";
@@ -24,6 +24,7 @@ function FichaCliente({ mi = false }) {
   const puedeCobrar = esStaff || mi;
 
   const [datos, setDatos] = useState(null);
+  const [domicilio, setDomicilio] = useState(null);
   const [anio, setAnio] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -95,8 +96,17 @@ function FichaCliente({ mi = false }) {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const cerrarSesion = async () => {
-    try { await api.post("/auth/logout"); } catch (e) {}
+  useEffect(() => {
+    const idCliente = mi ? datos?.idCliente : id;
+
+    if (!idCliente) return;
+
+    api.get(`/domicilios/cliente/${idCliente}`)
+      .then(({ data }) => setDomicilio(Array.isArray(data) && data.length > 0 ? data[0] : null))
+      .catch(() => setDomicilio(null));
+  }, [mi, id, datos?.idCliente]);
+
+  const cerrarSesion = async () => {    try { await api.post("/auth/logout"); } catch (e) {}
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
     navigate("/login", { replace: true });
@@ -177,6 +187,9 @@ function FichaCliente({ mi = false }) {
               <button className="sidebar-link active" onClick={() => navigate("/mi-estado-cuenta")}>
                 <CalendarDays size={19} /> Mi estado de cuenta
               </button>
+              <button className="sidebar-link" onClick={() => navigate("/reportar-falla")}>
+                <LifeBuoy size={19} /> Reportar falla
+              </button>
             </>
           ) : (
             <>
@@ -188,6 +201,9 @@ function FichaCliente({ mi = false }) {
               </button>
               <button className="sidebar-link" onClick={() => navigate(esAdmin ? "/admin" : "/empleado")}>
                 <Receipt size={19} /> Pagos y Facturación
+              </button>
+              <button className="sidebar-link" onClick={() => navigate(esAdmin ? "/admin" : "/empleado")}>
+                <LifeBuoy size={19} /> Soporte Técnico
               </button>
               {esAdmin && (
                 <button className="sidebar-link" onClick={() => navigate("/admin")}>
@@ -226,6 +242,12 @@ function FichaCliente({ mi = false }) {
             </span>
             <h1>{datos?.nombre || "Cargando…"}</h1>
             <p>{datos ? `${datos.email} · ${datos.telefono}` : ""}</p>
+            <p className="ficha-direccion">
+              <MapPin size={14} />
+              {domicilio
+                ? `${domicilio.calle} #${domicilio.numero}, Col. ${domicilio.colonia}, ${domicilio.nombreMunicipio || ""}, ${domicilio.nombreEstado || "Oaxaca"}, C.P. ${domicilio.codigoPostal}`
+                : "Sin domicilio registrado"}
+            </p>
           </div>
 
           <div className="dashboard-profile">
@@ -315,10 +337,12 @@ function FichaCliente({ mi = false }) {
                 <span>Meses pagados en {anio}</span>
                 <strong>{datos.mesesPagados} de 12</strong>
               </div>
-              <div>
-                <span>Total cobrado</span>
-                <strong>${Number(datos.totalPagado).toFixed(2)}</strong>
-              </div>
+              {!mi && (
+                <div>
+                  <span>Total cobrado</span>
+                  <strong>${Number(datos.totalPagado).toFixed(2)}</strong>
+                </div>
+              )}
               <div>
                 <span>Meses pendientes</span>
                 <strong>

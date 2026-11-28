@@ -33,11 +33,48 @@ public class ClienteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
     public ResponseEntity<Page<ClienteResponse>> listar(
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) Boolean conCuenta,
+            @RequestParam(required = false) Integer idEstado,
+            @RequestParam(required = false) Integer idMunicipio,
+            @RequestParam(required = false) String colonia,
+            @RequestParam(required = false) Boolean pagoMes,
             Pageable pageable) {
 
         return ResponseEntity.ok(
-                clienteService.listar(q, pageable)
+                clienteService.listar(q, estado, conCuenta, idEstado, idMunicipio, colonia, pagoMes, pageable)
         );
+    }
+
+    // -----------------------------------------------------------------
+    // Domicilio del cliente autenticado
+    // -----------------------------------------------------------------
+    @GetMapping("/mi-domicilio")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
+    public ResponseEntity<java.util.List<com.enlasate.backend.dto.DomicilioResponse>> miDomicilio(
+            Authentication authentication) {
+
+        return ResponseEntity.ok(clienteService.miDomicilio(authentication.getName()));
+    }
+
+    @PutMapping("/mi-domicilio")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
+    public ResponseEntity<Void> guardarMiDomicilio(
+            @RequestBody com.enlasate.backend.dto.DomicilioRequest request,
+            Authentication authentication) {
+
+        clienteService.guardarMiDomicilio(authentication.getName(), request);
+        return ResponseEntity.noContent().build();
+    }
+
+    // -----------------------------------------------------------------
+    // Clientes agrupados por municipio y colonia
+    // -----------------------------------------------------------------
+    @GetMapping("/por-zona")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO')")
+    public ResponseEntity<java.util.List<com.enlasate.backend.dto.ZonaResponse>> porZona() {
+
+        return ResponseEntity.ok(clienteService.porZona());
     }
 
     // Buscar cliente por ID
@@ -67,7 +104,7 @@ public class ClienteController {
     }
     // Consultar los datos del cliente autenticado
 @GetMapping("/mi-plan")
-@PreAuthorize("hasRole('CLIENTE')")
+@PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
 public ResponseEntity<ClienteResponse> consultarMiPlan(
         Authentication authentication) {
 
@@ -102,7 +139,7 @@ public ResponseEntity<ClienteResponse> consultarMiPlan(
     // El cliente elige al empleado que lo atenderá
     // -----------------------------------------------------------------
     @PutMapping("/mi-empleado")
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<ClienteResponse> asignarEmpleado(
             @Valid @RequestBody EmpleadoSeleccionRequest request,
             Authentication authentication) {
@@ -190,7 +227,7 @@ public ResponseEntity<ClienteResponse> consultarMiPlan(
     // El cliente activa su propia cuenta con el código de su asesor
     // -----------------------------------------------------------------
     @PostMapping("/mi-activacion")
-    @PreAuthorize("hasRole('CLIENTE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLEADO', 'CLIENTE')")
     public ResponseEntity<ClienteResponse> activarMiCuenta(
             @Valid @RequestBody ActivacionRequest request,
             Authentication authentication) {

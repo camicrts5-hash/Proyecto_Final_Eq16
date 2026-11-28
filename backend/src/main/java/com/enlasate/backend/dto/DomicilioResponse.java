@@ -5,8 +5,11 @@ public record DomicilioResponse(
         Integer idCliente,
         String nombreCliente,
         Integer idMunicipio,
+        String nombreMunicipio,
+        String nombreEstado,
         String calle,
         String numero,
         String colonia,
-        String codigoPostal
+        String codigoPostal,
+        Integer idColonia
 ) {}
